@@ -1,0 +1,13 @@
+{% load humanize %}
+<div class="border p-3 rounded-lg bg-white flex flex-col justify-between">
+  <div>
+    <h4 class="font-semibold text-sm">d/{{ sub.name }}</h4>
+    <p class="text-xs text-gray-500">{{ sub.description }}</p>
+    <p class="text-xs text-gray-400 mt-1">{{ sub.members|intcomma }} members</p>
+  </div>
+  <div class="mt-2">
+    <button class="bg-purple-600 text-white px-3 py-1 text-xs rounded hover:bg-purple-700">
+      Join
+    </button>
+  </div>
+</div>
