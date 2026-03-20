@@ -1,4 +1,10 @@
-<div class="bg-white p-4 rounded-lg shadow space-y-2">
+<div
+  class="bg-white p-4 rounded-lg shadow space-y-2 cursor-pointer hover:bg-gray-50"
+  role="link"
+  tabindex="0"
+  onclick="window.location.href='{% url 'post_detail' post_id=post.id %}'"
+  onkeydown="if (event.key === 'Enter') window.location.href='{% url 'post_detail' post_id=post.id %}'"
+>
   <div class="flex justify-between text-gray-500 text-sm">
     <span>d/{{ post.subthread }} • {{ post.timeAgo }}</span>
     <span>👍 {{ post.upvotes }} • 💬 {{ post.comments }}</span>
@@ -17,7 +23,7 @@
   </div>
 
   <div class="flex gap-4 text-gray-500 text-sm mt-2">
-    <a href="#" class="hover:underline">Comments</a>
-    <a href="#" class="hover:underline">Share</a>
+    <a href="{% url 'post_detail' post_id=post.id %}#comments" class="hover:underline" onclick="event.stopPropagation()">Comments</a>
+    <button type="button" class="hover:underline" onclick="event.stopPropagation()">Share</button>
   </div>
 </div>

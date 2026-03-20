@@ -28,12 +28,17 @@
 
     <!-- Auth Buttons -->
     <div class="flex items-center gap-3">
-      <a href="login" class="text-sm text-gray-600 hover:text-black">
-        Log in
-      </a>
-      <a href="signup" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700">
-        Sign Up
-      </a>
+      {% if user.is_authenticated %}
+        <span class="text-sm text-gray-600">Hello, {{ user.username }}!</span>
+        <a href="/main/logout/" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700">Log out</a>
+      {% else %}
+        <a href="/main/login/" class="text-sm text-gray-600 hover:text-black">
+          Log in
+        </a>
+        <a href="/main/signup/" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700">
+          Sign Up
+        </a>
+      {% endif %}
     </div>
 
   </div>
