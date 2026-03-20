@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'tailwind',
-    'main',
+    'main.apps.MainConfig',
     'landing',
 ]
 

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 grid grid-cols-12 gap-6">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="col-span-2">
+    {% include "components/sidebar.html" %}
+  </aside>
+
+  <!-- MAIN FEED -->
+  <main class="col-span-7 space-y-4">
+    <div class="bg-white p-6 rounded-lg shadow mb-6">
+      <a href="{% url 'index' %}" class="text-sm text-purple-600 hover:underline mb-4 inline-block">&larr; Back to feed</a>
+      <h1 class="text-2xl font-bold">d/{{ subthread.name }}</h1>
+      <p class="text-gray-600 mt-2">{{ subthread.description }}</p>
+      <div class="flex items-center text-sm text-gray-500 mt-2">
+        <span>{{ subthread.members }} members</span>
+        <span class="ml-4">created by {{ subthread.created_by.username }}</span>
+      </div>
+    </div>
+    
+    {% if user.is_authenticated %}
+    <div class="bg-white p-4 rounded-lg shadow border mb-6">
+      <h3 class="font-semibold mb-2">Create Post</h3>
+      <button onclick="document.getElementById('create-post-modal').style.display='block'" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 font-medium cursor-pointer">+ Create Post</button>
+    </div>
+    {% endif %}
+    
+    <!-- Posts in this subthread -->  
+    {% if posts %}
+      {% for post in posts %}
+        {% include "components/post_card.html" %}
+      {% endfor %}
+    {% else %}
+      <div class="text-center text-gray-500 p-12">
+        <p class="text-xl">No posts in d/{{ subthread.name }} yet.</p>
+        <p class="mt-2">Be the first to post!</p>
+      </div>
+    {% endif %}
+  </main>
+
+  <!-- RIGHT SIDEBAR -->
+  <aside class="col-span-3 space-y-4">
+    {% if user.is_authenticated %}
+    <div class="bg-white p-4 rounded-lg shadow border">
+      <h3 class="font-semibold mb-2">Create New Subthread</h3>
+      <button id="create-subthread-btn" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 font-medium">+ New Subthread</button>
+    </div>
+    {% endif %}
+    <div>
+      <h3 class="font-semibold mb-3">Suggested Subthreads</h3>
+      {% if suggested_subthreads %}
+        {% for sub in suggested_subthreads %}
+          {% include "components/subthread_card.html" with sub=sub %}
+        {% endfor %}
+      {% else %}
+        <p class="text-gray-500">No suggestions yet.</p>
+      {% endif %}
+    </div>
+    <div>
+      <h3 class="font-semibold mb-3">Joined Subthreads</h3>
+      {% if joined_subthreads %}
+        {% for sub in joined_subthreads %}
+          {% include "components/subthread_card.html" with sub=sub %}
+        {% endfor %}
+      {% else %}
+        <p class="text-gray-500">No joined subthreads yet.</p>
+      {% endif %}
+    </div>
+  </aside>
+
+  <!-- Create Post Modal -->
+  {% if user.is_authenticated %}
+  <div id="create-post-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Create Post in d/{{ subthread.name }}</h3>
+        <form method="post" action="/main/create-post/{{ subthread.name }}/" class="space-y-3">
+          {% csrf_token %}
+          <input type="text" name="title" placeholder="Post title" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+          <textarea name="content" placeholder="What's on your mind?" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" rows="6" required></textarea>
+          <div class="flex space-x-3 pt-4">
+    <button type="button" onclick="document.getElementById('create-post-modal').style.display='none'" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Cancel</button>
+            <button type="submit" class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 font-medium">Post</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Create Subthread Modal (same as index) -->
+  {% if user.is_authenticated %}
+  <div id="create-subthread-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50" style="display: none;">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Create New Subthread</h3>
+        <form method="post" action="{% url 'create_subthread' %}" class="space-y-3">
+          {% csrf_token %}
+          <input type="text" name="name" placeholder="Subthread name (e.g. python)" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" required maxlength="100">
+          <textarea name="description" placeholder="Description (optional)" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" rows="4"></textarea>
+          <div class="flex space-x-3 pt-4">
+            <button type="button" id="cancel-subthread" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Cancel</button>
+            <button type="submit" class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 font-medium">Create Subthread</button>
+          </div>
+        </form>
+        {% if error %}
+          <p class="text-red-500 text-sm mt-3 p-3 bg-red-50 border rounded">{{ error }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Subthread modal
+  const subModal = document.getElementById('create-subthread-modal');
+  const subBtn = document.getElementById('create-subthread-btn');
+  const subCancel = document.getElementById('cancel-subthread');
+
+  if (subBtn && subModal && subCancel) {
+    subBtn.addEventListener('click', () => {
+      subModal.style.display = 'block';
+    });
+
+    subCancel.addEventListener('click', () => {
+      subModal.style.display = 'none';
+    });
+
+    subModal.addEventListener('click', (e) => {
+      if (e.target === subModal) {
+        subModal.style.display = 'none';
+      }
+    });
+  }
+
+  // Post modal
+  const postModal = document.getElementById('create-post-modal');
+  const postBtn = document.getElementById('create-post-btn');
+  const postCancel = document.getElementById('cancel-post');
+
+  if (postBtn && postModal && postCancel) {
+    postBtn.addEventListener('click', () => {
+      postModal.style.display = 'block';
+    });
+
+    postCancel.addEventListener('click', () => {
+      postModal.style.display = 'none';
+    });
+
+    postModal.addEventListener('click', (e) => {
+      if (e.target === postModal) {
+        postModal.style.display = 'none';
+      }
+    });
+  }
+});
+</script>
+
+{% endblock %}
