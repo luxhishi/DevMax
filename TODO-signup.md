@@ -12,4 +12,7 @@ Signup complete.
 
 ## Test:
 `python manage.py runserver`
-Click Sign Up → form → create user → redirect to login
+Click Sign Up → form → create user → redirect to login # ryan - tested : working (created an account and successfully logged in)
+
+mark done? 
+
