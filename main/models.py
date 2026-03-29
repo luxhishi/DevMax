@@ -1,5 +1,20 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User
+
+
+class UserPreference(models.Model):
+    DISPLAY_MODE_CHOICES = (
+        ("light", "Light"),
+        ("dark", "Dark"),
+    )
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="preference")
+    display_mode = models.CharField(max_length=5, choices=DISPLAY_MODE_CHOICES, default="light")
+
+    def __str__(self):
+        return f"Preferences for {self.user.username}"
+
 
 class Subthread(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -55,5 +70,23 @@ class Vote(models.Model):
     vote_type = models.CharField(max_length=4, choices=VOTE_CHOICES)
 
     class Meta:
-        unique_together = ('user', 'post', 'comment')
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    (Q(post__isnull=False) & Q(comment__isnull=True))
+                    | (Q(post__isnull=True) & Q(comment__isnull=False))
+                ),
+                name="vote_exactly_one_target",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "post"],
+                condition=Q(post__isnull=False, comment__isnull=True),
+                name="unique_post_vote_per_user",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "comment"],
+                condition=Q(comment__isnull=False, post__isnull=True),
+                name="unique_comment_vote_per_user",
+            ),
+        ]
 
