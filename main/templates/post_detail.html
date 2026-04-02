@@ -2,12 +2,74 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
-  <a href="{% url 'index' %}" class="text-sm text-purple-600 hover:underline">&larr; Back to feed</a>
+  <a href="{{ back_url }}" class="text-sm text-purple-600 hover:underline">&larr; Back to feed</a>
 
   <div class="bg-white p-6 rounded-lg shadow mt-4">
     <div class="flex justify-between text-gray-500 text-sm">
-      <span>d/{{ post.subthread }} • {{ post.timeAgo }}</span>
-      <span>👍 {{ post.upvotes }} • 💬 {{ post.comments }}</span>
+      <span>d/{{ post.subthread }} &bull; {{ post.timeAgo }}</span>
+      <div class="flex items-start gap-6">
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'main:vote_post' post.id %}" class="flex-shrink-0">
+          {% csrf_token %}
+          <input type="hidden" name="vote_type" value="up">
+          {% if return_to_subthread %}
+          <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+          {% endif %}
+          <button
+            type="submit"
+            class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none {% if current_user_vote == 'up' %}vote-up-active{% else %}vote-neutral{% endif %}"
+            aria-label="Upvote post"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15l6-6 6 6"/>
+            </svg>
+            <span>{{ post.upvotes }}</span>
+          </button>
+        </form>
+        <form method="post" action="{% url 'main:vote_post' post.id %}" class="flex-shrink-0">
+          {% csrf_token %}
+          <input type="hidden" name="vote_type" value="down">
+          {% if return_to_subthread %}
+          <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+          {% endif %}
+          <button
+            type="submit"
+            class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none {% if current_user_vote == 'down' %}vote-down-active{% else %}vote-neutral{% endif %}"
+            aria-label="Downvote post"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9l-6 6-6-6"/>
+            </svg>
+            <span>{{ post.downvotes }}</span>
+          </button>
+        </form>
+        <span class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none text-gray-500">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m-8 6l2.5-2H19a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h.5L5 20z"/>
+          </svg>
+          <span>{{ post.comments }}</span>
+        </span>
+        {% else %}
+        <span class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none vote-neutral">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15l6-6 6 6"/>
+          </svg>
+          <span>{{ post.upvotes }}</span>
+        </span>
+        <span class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none vote-neutral">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9l-6 6-6-6"/>
+          </svg>
+          <span>{{ post.downvotes }}</span>
+        </span>
+        <span class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none text-gray-500">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m-8 6l2.5-2H19a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h.5L5 20z"/>
+          </svg>
+          <span>{{ post.comments }}</span>
+        </span>
+        {% endif %}
+      </div>
     </div>
 
     <h1 class="text-2xl font-semibold mt-3">{{ post.title }}</h1>
@@ -21,8 +83,124 @@
     </div>
 
     <div id="comments" class="mt-8">
-      <h2 class="text-lg font-semibold mb-2">Comments</h2>
-      <p class="text-gray-500">(Comments UI not implemented yet.)</p>
+      <h2 class="text-lg font-semibold mb-2">Comments ({{ post.comments }})</h2>
+
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'main:post_comment' post.id %}" class="mb-4">
+        {% csrf_token %}
+        {% if return_to_subthread %}
+        <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+        {% endif %}
+        <textarea name="content" placeholder="Write a comment..." class="w-full p-2 border rounded" required></textarea>
+        <button type="submit" class="mt-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Post Comment</button>
+      </form>
+      {% else %}
+      <p class="text-gray-500 mb-4">Log in to post comments.</p>
+      {% endif %}
+
+      {% for comment in comments %}
+      <div class="border-l-2 border-gray-200 pl-4 mb-4">
+        <div class="flex items-start justify-between gap-4">
+          <span class="text-sm text-gray-500">{{ comment.author.username }} &bull; {{ comment.created_at|timesince }} ago</span>
+          <div class="flex items-start gap-5">
+            <form method="post" action="{% url 'main:vote_comment' comment.id %}" class="flex-shrink-0">
+              {% csrf_token %}
+              <input type="hidden" name="vote_type" value="up">
+              {% if return_to_subthread %}
+              <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+              {% endif %}
+              <button
+                type="submit"
+                class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none {% if comment.current_user_vote == 'up' %}vote-up-active{% else %}vote-neutral{% endif %}"
+                aria-label="Upvote comment"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15l6-6 6 6"/>
+                </svg>
+                <span>{{ comment.upvotes }}</span>
+              </button>
+            </form>
+            <form method="post" action="{% url 'main:vote_comment' comment.id %}" class="flex-shrink-0">
+              {% csrf_token %}
+              <input type="hidden" name="vote_type" value="down">
+              {% if return_to_subthread %}
+              <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+              {% endif %}
+              <button
+                type="submit"
+                class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none {% if comment.current_user_vote == 'down' %}vote-down-active{% else %}vote-neutral{% endif %}"
+                aria-label="Downvote comment"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9l-6 6-6-6"/>
+                </svg>
+                <span>{{ comment.downvotes }}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+        <p class="mt-2">{{ comment.content }}</p>
+
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'main:post_comment' post.id %}" class="mt-2">
+          {% csrf_token %}
+          <input type="hidden" name="parent_id" value="{{ comment.id }}">
+          {% if return_to_subthread %}
+          <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+          {% endif %}
+          <textarea name="content" placeholder="Reply..." class="w-full p-1 border rounded text-sm" required></textarea>
+          <button type="submit" class="mt-1 bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700">Reply</button>
+        </form>
+        {% endif %}
+
+        {% for reply in comment.replies.all %}
+        <div class="border-l-2 border-gray-100 pl-4 mt-2">
+          <div class="flex items-start justify-between gap-4">
+            <span class="text-sm text-gray-500">{{ reply.author.username }} &bull; {{ reply.created_at|timesince }} ago</span>
+            <div class="flex items-start gap-5">
+              <form method="post" action="{% url 'main:vote_comment' reply.id %}" class="flex-shrink-0">
+                {% csrf_token %}
+                <input type="hidden" name="vote_type" value="up">
+                {% if return_to_subthread %}
+                <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+                {% endif %}
+                <button
+                  type="submit"
+                  class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none {% if reply.current_user_vote == 'up' %}vote-up-active{% else %}vote-neutral{% endif %}"
+                  aria-label="Upvote reply"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15l6-6 6 6"/>
+                  </svg>
+                  <span>{{ reply.upvotes }}</span>
+                </button>
+              </form>
+              <form method="post" action="{% url 'main:vote_comment' reply.id %}" class="flex-shrink-0">
+                {% csrf_token %}
+                <input type="hidden" name="vote_type" value="down">
+                {% if return_to_subthread %}
+                <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+                {% endif %}
+                <button
+                  type="submit"
+                  class="inline-flex w-10 flex-col items-center gap-1.5 text-center leading-none {% if reply.current_user_vote == 'down' %}vote-down-active{% else %}vote-neutral{% endif %}"
+                  aria-label="Downvote reply"
+                >
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9l-6 6-6-6"/>
+                  </svg>
+                  <span>{{ reply.downvotes }}</span>
+                </button>
+              </form>
+            </div>
+          </div>
+          <p class="mt-1 text-sm">{{ reply.content }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% empty %}
+      <p class="text-gray-500">No comments yet.</p>
+      {% endfor %}
     </div>
   </div>
 </div>

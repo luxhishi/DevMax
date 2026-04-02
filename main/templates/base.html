@@ -4,63 +4,341 @@
 <head>
   <meta charset="UTF-8">
   <title>DevMax</title>
-  
-  <!-- Tailwind CSS -->
+
   {% tailwind_css %}
+
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #f3f4f6;
+      --surface: #ffffff;
+      --surface-soft: #e5e7eb;
+      --header-bg: rgba(255, 255, 255, 0.94);
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --text-soft: #9ca3af;
+      --border-color: #e5e7eb;
+      --accent: #7c3aed;
+      --accent-hover: #6d28d9;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --hover-surface: #f9fafb;
+      --input-bg: #ffffff;
+      --shadow-color: rgba(15, 23, 42, 0.12);
+    }
+
+    body.dark-mode {
+      color-scheme: dark;
+      --page-bg: #0b1220;
+      --surface: #111827;
+      --surface-soft: #1e293b;
+      --header-bg: rgba(15, 23, 42, 0.94);
+      --text-main: #e5eefb;
+      --text-muted: #9fb0c6;
+      --text-soft: #73849c;
+      --border-color: #263345;
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --danger: #f87171;
+      --danger-hover: #ef4444;
+      --hover-surface: #162033;
+      --input-bg: #0f172a;
+      --shadow-color: rgba(0, 0, 0, 0.38);
+    }
+
+    body {
+      background-color: var(--page-bg) !important;
+      color: var(--text-main) !important;
+      transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    header,
+    footer {
+      background-color: var(--header-bg) !important;
+      border-color: var(--border-color) !important;
+      transition: background-color 180ms ease, border-color 180ms ease;
+    }
+
+    body .bg-white {
+      background-color: var(--surface) !important;
+    }
+
+    body .bg-gray-100 {
+      background-color: var(--page-bg) !important;
+    }
+
+    body .bg-gray-200 {
+      background-color: var(--surface-soft) !important;
+    }
+
+    body .text-gray-900,
+    body .text-gray-700 {
+      color: var(--text-main) !important;
+    }
+
+    body .text-gray-600,
+    body .text-gray-500 {
+      color: var(--text-muted) !important;
+    }
+
+    body .text-gray-400 {
+      color: var(--text-soft) !important;
+    }
+
+    body .border,
+    body .border-b,
+    body .border-t,
+    body .border-gray-300,
+    body .border-gray-200,
+    body .border-gray-100 {
+      border-color: var(--border-color) !important;
+    }
+
+    body input,
+    body textarea,
+    body select {
+      background-color: var(--input-bg) !important;
+      color: var(--text-main) !important;
+      border-color: var(--border-color) !important;
+    }
+
+    body input::placeholder,
+    body textarea::placeholder {
+      color: var(--text-muted) !important;
+    }
+
+    body .bg-purple-600 {
+      background-color: var(--accent) !important;
+    }
+
+    body .hover\:bg-purple-700:hover {
+      background-color: var(--accent-hover) !important;
+    }
+
+    body .text-purple-600 {
+      color: var(--accent) !important;
+    }
+
+    body .hover\:text-purple-700:hover,
+    body .hover\:text-purple-500:hover {
+      color: var(--accent-hover) !important;
+    }
+
+    body .hover\:bg-gray-100:hover,
+    body .hover\:bg-gray-50:hover {
+      background-color: var(--hover-surface) !important;
+    }
+
+    body .shadow {
+      box-shadow: 0 14px 28px var(--shadow-color) !important;
+    }
+
+    .navbar-shell {
+      background: linear-gradient(180deg, var(--header-bg), var(--surface));
+      backdrop-filter: blur(12px);
+    }
+
+    .avatar-button {
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background:
+        radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.9) 0 18%, transparent 19%),
+        radial-gradient(circle at 50% 76%, rgba(255, 255, 255, 0.9) 0 24%, transparent 25%),
+        linear-gradient(135deg, var(--accent), var(--accent-hover));
+      box-shadow: 0 12px 24px var(--shadow-color);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+
+    .avatar-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 28px var(--shadow-color);
+    }
+
+    .dropdown-panel {
+      background-color: var(--surface);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 20px 45px var(--shadow-color);
+    }
+
+    .account-dropdown {
+      width: 24rem;
+      max-width: calc(90vw - 1.5rem);
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .menu-row {
+      color: var(--text-main);
+      transition: background-color 160ms ease;
+    }
+
+    .menu-row:hover {
+      background-color: var(--hover-surface);
+    }
+
+    .vote-neutral {
+      color: var(--text-muted) !important;
+    }
+
+    .vote-neutral:hover {
+      color: var(--text-main) !important;
+    }
+
+    .vote-up-active {
+      color: var(--accent) !important;
+    }
+
+    .vote-up-active:hover {
+      color: var(--accent-hover) !important;
+    }
+
+    .vote-down-active {
+      color: var(--danger) !important;
+    }
+
+    .vote-down-active:hover {
+      color: var(--danger-hover) !important;
+    }
+
+    .mode-switch {
+      width: 3.25rem;
+      height: 1.8rem;
+      border-radius: 9999px;
+      background-color: var(--surface-soft);
+      border: 1px solid var(--border-color);
+      position: relative;
+      flex-shrink: 0;
+      transition: background-color 180ms ease, border-color 180ms ease;
+    }
+
+    .mode-switch::after {
+      content: "";
+      position: absolute;
+      top: 0.16rem;
+      left: 0.2rem;
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #ffffff, #dbe4ff);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+      transition: transform 180ms ease;
+    }
+
+    body.dark-mode .mode-switch {
+      background-color: rgba(139, 92, 246, 0.2);
+    }
+
+    body.dark-mode .mode-switch::after {
+      transform: translateX(1.42rem);
+      background: linear-gradient(135deg, #f5d76e, #f59e0b);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-900">
+<body
+  class="bg-gray-100 text-gray-900{% if display_mode == 'dark' %} dark-mode{% endif %}"
+  data-display-mode="{{ display_mode }}"
+  {% if user.is_authenticated %}data-display-mode-url="{% url 'main:update_display_mode' %}"{% endif %}
+>
 
-<!-- 🔝 NAVBAR -->
-<header class="bg-white border-b">
-  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-
-    <!-- Logo -->
-    <h1 class="text-xl font-bold text-purple-600">
-      DevMax
+<header class="bg-white border-b navbar-shell">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <h1 class="text-xl font-bold text-purple-600 shrink-0">
+      <a href="{% url 'main:index' %}" class="hover:text-purple-700" aria-label="Go to DevMax homepage">
+        DevMax
+      </a>
     </h1>
 
-    <!-- Search -->
-    <input 
+    <input
       type="text"
       placeholder="Search DevMax..."
-      class="w-1/3 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+      class="w-1/3 min-w-0 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
     >
 
-    <!-- Auth Buttons -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 shrink-0">
       {% if user.is_authenticated %}
-        <span class="text-sm text-gray-600">Hello, {{ user.username }}!</span>
-        <a href="/main/logout/" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700">Log out</a>
+        <div class="relative">
+          <button
+            type="button"
+            id="avatar-menu-button"
+            class="avatar-button"
+            aria-label="Open account menu"
+            aria-expanded="false"
+            aria-controls="avatar-menu"
+          ></button>
+
+          <div
+            id="avatar-menu"
+            class="dropdown-panel account-dropdown absolute right-0 mt-3 rounded-2xl overflow-hidden"
+            hidden
+          >
+            <div class="px-4 py-3 border-b border-gray-200">
+              <p class="text-sm font-semibold text-gray-900">{{ user.username }}</p>
+              <p class="text-xs text-gray-500">Account menu</p>
+            </div>
+
+            <div class="p-2">
+              <a href="{% url 'main:profile' %}" class="menu-row flex items-center justify-between rounded-xl px-3 py-3 text-sm">
+                <span class="font-medium">View profile</span>
+                <span class="text-gray-400" aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </span>
+              </a>
+
+              <button
+                type="button"
+                id="display-mode-toggle"
+                class="menu-row flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm"
+              >
+                <span>
+                  <span class="block font-medium">Display mode</span>
+                  <span id="display-mode-label" class="block text-xs text-gray-500">
+                    {% if display_mode == 'dark' %}Dark mode{% else %}Light mode{% endif %}
+                  </span>
+                </span>
+                <span class="mode-switch" aria-hidden="true"></span>
+              </button>
+
+              <a href="{% url 'main:logout' %}" class="menu-row flex items-center justify-between rounded-xl px-3 py-3 text-sm text-red-500">
+                <span class="font-medium">Log out</span>
+                <span aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H9m4 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+                  </svg>
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
       {% else %}
-        <a href="/main/login/" class="text-sm text-gray-600 hover:text-black">
+        <a href="{% url 'main:login' %}" class="text-sm text-gray-600 hover:text-black">
           Log in
         </a>
-        <a href="/main/signup/" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700">
+        <a href="{% url 'main:signup' %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-purple-700">
           Sign Up
         </a>
       {% endif %}
     </div>
-
   </div>
 </header>
 
-<!-- 🧱 MAIN CONTENT -->
 <main class="min-h-screen">
   {% block content %}
   {% endblock %}
 </main>
 
-<!-- 🔻 FOOTER -->
 <footer class="bg-white border-t mt-10">
   <div class="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-6 text-sm text-gray-600">
-
-    <!-- Brand -->
     <div>
       <h2 class="font-bold text-purple-600 mb-2">DevMax</h2>
       <p>A web-based forum platform designed for programmers.</p>
     </div>
 
-    <!-- Community -->
     <div>
       <h3 class="font-semibold mb-2">Community</h3>
       <ul class="space-y-1">
@@ -70,7 +348,6 @@
       </ul>
     </div>
 
-    <!-- Resources -->
     <div>
       <h3 class="font-semibold mb-2">Resources</h3>
       <ul class="space-y-1">
@@ -80,7 +357,6 @@
       </ul>
     </div>
 
-    <!-- About -->
     <div>
       <h3 class="font-semibold mb-2">About</h3>
       <ul class="space-y-1">
@@ -89,13 +365,95 @@
         <li><a href="#" class="hover:underline">Terms of Service</a></li>
       </ul>
     </div>
-
   </div>
 
   <div class="text-center text-xs text-gray-400 pb-4">
     © 2026 DevMax. All rights reserved.
   </div>
 </footer>
+
+<script>
+  (function() {
+    const body = document.body;
+    const modeLabel = document.getElementById('display-mode-label');
+    const toggle = document.getElementById('display-mode-toggle');
+    const avatarButton = document.getElementById('avatar-menu-button');
+    const avatarMenu = document.getElementById('avatar-menu');
+    const displayModeUrl = body.dataset.displayModeUrl;
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) {
+        return parts.pop().split(';').shift();
+      }
+      return '';
+    }
+
+    function applyMode(mode) {
+      const isDark = mode === 'dark';
+      body.classList.toggle('dark-mode', isDark);
+       body.dataset.displayMode = mode;
+      if (modeLabel) {
+        modeLabel.textContent = isDark ? 'Dark mode' : 'Light mode';
+      }
+    }
+
+    applyMode(body.dataset.displayMode || 'light');
+
+    if (toggle) {
+      toggle.addEventListener('click', async function() {
+        const nextMode = body.classList.contains('dark-mode') ? 'light' : 'dark';
+        applyMode(nextMode);
+
+        try {
+          const response = await fetch(displayModeUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+              'X-CSRFToken': getCookie('csrftoken'),
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: new URLSearchParams({ display_mode: nextMode }),
+            credentials: 'same-origin',
+          });
+
+          if (!response.ok) {
+            throw new Error('Display mode update failed.');
+          }
+        } catch (error) {
+          const previousMode = nextMode === 'dark' ? 'light' : 'dark';
+          applyMode(previousMode);
+        }
+      });
+    }
+
+    if (avatarButton && avatarMenu) {
+      avatarButton.addEventListener('click', function(event) {
+        event.stopPropagation();
+        const willOpen = avatarMenu.hidden;
+        avatarMenu.hidden = !avatarMenu.hidden;
+        avatarButton.setAttribute('aria-expanded', String(willOpen));
+      });
+
+      avatarMenu.addEventListener('click', function(event) {
+        event.stopPropagation();
+      });
+
+      document.addEventListener('click', function() {
+        avatarMenu.hidden = true;
+        avatarButton.setAttribute('aria-expanded', 'false');
+      });
+
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          avatarMenu.hidden = true;
+          avatarButton.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+  })();
+</script>
 
 </body>
 </html>
