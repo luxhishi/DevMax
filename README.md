@@ -1,44 +1,106 @@
-DevMax – Coding Forum Platform
+# DevMax
 
-DevMax is a web-based platform designed for programmers to ask questions, share solutions, and collaborate efficiently. It focuses on improving problem-solving through structured discussions and code sharing.
+DevMax is a coding forum platform built with Django and Tailwind CSS. It is designed around discussion-first workflows for developers: creating subthreads, posting questions or updates, commenting, and voting inside a community-style feed.
 
-Features
+## Features
 
-Post programming questions (beginner to advanced)
+- Community-style feed for developer discussions
+- Subthreads for topic-specific spaces such as `d/python` or `d/django`
+- User authentication with signup, login, logout, and profile views
+- Post creation, threaded comments, and voting
+- Light and dark display modes
+- Supabase-backed PostgreSQL support for hosted persistence
 
-Answer and discuss solutions
+## Tech Stack
 
-Tag system for organizing topics (e.g., Python, Django, Algorithms)
+- Django
+- Django templates
+- Tailwind CSS
+- PostgreSQL
+- Supabase
 
-Voting system for highlighting high-quality answers
+## Getting Started
 
-Accepted answers for solved problems
+### 1. Clone the repository
 
-Code snippet sharing with syntax highlighting
+```bash
+git clone https://github.com/luxhishi/devmax.git
+cd devmax
+```
 
-Real-time updates for discussions
+### 2. Create and activate a virtual environment
 
-Tech Stack
-Frontend
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
 
-Django Templates
+### 3. Install dependencies
 
-Tailwind CSS
+```bash
+pip install django psycopg[binary]
+```
 
-Backend
+If you are using the Tailwind workflow in this repo, also install frontend dependencies in the Tailwind source folder used by the project.
 
-Django
+### 4. Configure environment variables
 
-Django REST Framework
+Create a `.env` file in the project root and add your Supabase database values:
 
-Backend Services
+```env
+SUPABASE_DB_NAME=postgres
+SUPABASE_DB_USER=postgres.YOUR_PROJECT_REF
+SUPABASE_DB_PASSWORD=your-password
+SUPABASE_DB_HOST=YOUR_POOLER_HOST
+SUPABASE_DB_PORT=5432
+SUPABASE_DB_SSLMODE=require
+```
 
-Supabase
+## Running the Project
 
-PostgreSQL database
+Apply migrations:
 
-Authentication
+```bash
+python manage.py migrate
+```
 
-Realtime subscriptions
+Start the Django development server:
 
-File storage
+```bash
+python manage.py runserver
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000/
+```
+
+## Project Structure
+
+```text
+devmax/
+├── DevMax/              # Django project settings and configuration
+├── main/                # Core forum app
+├── landing/             # Landing-related app/views
+├── theme/               # Tailwind/theme assets
+├── manage.py
+└── README.md
+```
+
+## Current Notes
+
+- The project uses Django templates rather than a separate SPA frontend.
+- Supabase is used as the hosted PostgreSQL backend for this app.
+- The UI is currently styled to feel forum-like, with sticky rails, modal flows, and a Reddit-inspired feed layout.
+
+## Contributing
+
+1. Create a branch
+2. Make your changes
+3. Run the app locally and test the affected flows
+4. Open a pull request
+
+## License
+
+This project is currently unlicensed unless a license file is added to the repository.
