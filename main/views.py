@@ -109,17 +109,6 @@ def _sidebar_context(request):
     }
 
 
-def _ensure_welcome_post(subthread):
-    return Post.objects.get_or_create(
-        subthread=subthread,
-        author=subthread.created_by,
-        title=f"Welcome to d/{subthread.name}!",
-        defaults={
-            "content": f"First post in d/{subthread.name}.",
-        },
-    )[0]
-
-
 def _post_detail_redirect(post_id, return_to_subthread=None):
     return redirect(_build_post_detail_url(post_id, return_to_subthread=return_to_subthread))
 
@@ -385,7 +374,6 @@ def create_subthread(request):
         defaults={"description": description, "created_by": request.user},
     )
     if created:
-        _ensure_welcome_post(subthread)
         return redirect("main:subthread_detail", name=subthread.name)
 
     context = {
@@ -398,9 +386,6 @@ def create_subthread(request):
 
 def subthread_detail(request, name):
     subthread = get_object_or_404(Subthread, name=name)
-    if not Post.objects.filter(subthread=subthread).exists():
-        _ensure_welcome_post(subthread)
-
     post_qs = Post.objects.filter(subthread=subthread).select_related("author")
     posts = [_serialize_post(post, return_to_subthread=subthread.name) for post in post_qs]
 

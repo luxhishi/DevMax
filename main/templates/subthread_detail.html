@@ -1,164 +1,207 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6 grid grid-cols-12 gap-6">
+<div class="app-shell">
+  <div class="landing-grid">
+    <aside class="hidden lg:block rail-layer">
+      {% include "components/sidebar.html" %}
+    </aside>
 
-  <!-- LEFT SIDEBAR -->
-  <aside class="col-span-2">
-    {% include "components/sidebar.html" %}
-  </aside>
+    <main class="min-w-0 space-y-4">
+      <a href="{% url 'main:index' %}" class="inline-block text-sm text-purple-600 hover:underline">&larr; Back to feed</a>
 
-  <!-- MAIN FEED -->
-  <main class="col-span-7 space-y-4">
-    <div class="bg-white p-6 rounded-lg shadow mb-6">
-      <a href="{% url 'main:index' %}" class="text-sm text-purple-600 hover:underline mb-4 inline-block">&larr; Back to feed</a>
-      <h1 class="text-2xl font-bold">d/{{ subthread.name }}</h1>
-      <p class="text-gray-600 mt-2">{{ subthread.description }}</p>
-      <div class="flex items-center text-sm text-gray-500 mt-2">
-        <span>{{ subthread.members }} members</span>
-        <span class="ml-4">created by {{ subthread.created_by.username }}</span>
-      </div>
-    </div>
-    
-    {% if user.is_authenticated %}
-    <div class="bg-white p-4 rounded-lg shadow border mb-6">
-      <h3 class="font-semibold mb-2">Create Post</h3>
-      <button onclick="document.getElementById('create-post-modal').style.display='block'" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 font-medium cursor-pointer">+ Create Post</button>
-    </div>
-    {% endif %}
-    
-    <!-- Posts in this subthread -->  
-    {% if posts %}
-      {% for post in posts %}
-        {% include "components/post_card.html" %}
-      {% endfor %}
-    {% else %}
-      <div class="text-center text-gray-500 p-12">
-        <p class="text-xl">No posts in d/{{ subthread.name }} yet.</p>
-        <p class="mt-2">Be the first to post!</p>
-      </div>
-    {% endif %}
-  </main>
-
-  <!-- RIGHT SIDEBAR -->
-  <aside class="col-span-3 space-y-4">
-    {% if user.is_authenticated %}
-    <div class="bg-white p-4 rounded-lg shadow border">
-      <h3 class="font-semibold mb-2">Create New Subthread</h3>
-      <button id="create-subthread-btn" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 font-medium">+ New Subthread</button>
-    </div>
-    {% endif %}
-    <div>
-      <h3 class="font-semibold mb-3">Suggested Subthreads</h3>
-      {% if suggested_subthreads %}
-        {% for sub in suggested_subthreads %}
-          {% include "components/subthread_card.html" with sub=sub %}
-        {% endfor %}
-      {% else %}
-        <p class="text-gray-500">No suggestions yet.</p>
-      {% endif %}
-    </div>
-    <div>
-      <h3 class="font-semibold mb-3">Joined Subthreads</h3>
-      {% if joined_subthreads %}
-        {% for sub in joined_subthreads %}
-          {% include "components/subthread_card.html" with sub=sub %}
-        {% endfor %}
-      {% else %}
-        <p class="text-gray-500">No joined subthreads yet.</p>
-      {% endif %}
-    </div>
-  </aside>
-
-  <!-- Create Post Modal -->
-  {% if user.is_authenticated %}
-  <div id="create-post-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-96 shadow-lg rounded-md bg-white">
-      <div class="mt-3">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Create Post in d/{{ subthread.name }}</h3>
-        <form method="post" action="{% url 'main:create_post' subthread.name %}" class="space-y-3">
-          {% csrf_token %}
-          <input type="text" name="title" placeholder="Post title" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" required>
-          <textarea name="content" placeholder="What's on your mind?" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" rows="6" required></textarea>
-          <div class="flex space-x-3 pt-4">
-    <button type="button" onclick="document.getElementById('create-post-modal').style.display='none'" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Cancel</button>
-            <button type="submit" class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 font-medium">Post</button>
+      <section class="landing-panel p-6 sm:p-8">
+        <div class="flex flex-col gap-6 sm:gap-7">
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Subthread</p>
+            <h1 class="mt-3 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">d/{{ subthread.name }}</h1>
+            <p class="mt-3 max-w-2xl text-base leading-7 text-gray-600">{{ subthread.description }}</p>
+            <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+              <span>{{ subthread.members }} members</span>
+              <span>&bull;</span>
+              <span>created by {{ subthread.created_by.username }}</span>
+            </div>
           </div>
-        </form>
+        </div>
+      </section>
+
+      {% if posts %}
+        {% for post in posts %}
+          {% include "components/post_card.html" %}
+        {% endfor %}
+      {% else %}
+        <div class="landing-panel p-10 text-center text-gray-500">
+          <p class="text-lg">No posts in d/{{ subthread.name }} yet.</p>
+          <p class="mt-2 text-sm">Be the first to post.</p>
+        </div>
+      {% endif %}
+    </main>
+
+    <aside class="space-y-4 rail-layer">
+      {% if user.is_authenticated %}
+      <button id="create-post-btn" type="button" class="w-full cursor-pointer rounded-full bg-purple-600 px-5 py-3.5 text-sm font-semibold text-white hover:bg-purple-700">
+        + Create Post
+      </button>
+      {% endif %}
+
+      <div class="space-y-3">
+        <div class="landing-panel p-3">
+          <div class="flex items-center justify-between pb-2">
+            <h3 class="text-[11px] font-semibold text-gray-500">Suggested Subthreads</h3>
+            {% if user.is_authenticated %}
+            <button id="create-subthread-btn" class="cursor-pointer text-[10px] font-semibold text-purple-600 hover:text-purple-700">New</button>
+            {% endif %}
+          </div>
+          {% if suggested_subthreads %}
+            {% for sub in suggested_subthreads %}
+              {% include "components/subthread_card.html" with sub=sub %}
+            {% endfor %}
+          {% else %}
+            <p class="text-sm text-gray-500">No suggestions yet.</p>
+          {% endif %}
+        </div>
       </div>
+    </aside>
+  </div>
+
+  {% if user.is_authenticated %}
+  <div id="create-post-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card relative p-6 sm:p-7">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">New Post</p>
+          <h3 class="mt-2 text-2xl font-semibold text-gray-900">Create a post in d/{{ subthread.name }}</h3>
+          <p class="modal-note mt-2">Share an update, ask a question, or start a discussion for this subthread.</p>
+        </div>
+        <button
+          type="button"
+          id="close-post-x"
+          class="flex h-8 w-8 cursor-pointer items-center justify-center self-start text-2xl leading-none text-gray-500 hover:text-gray-900"
+          aria-label="Close create post modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      <form method="post" action="{% url 'main:create_post' subthread.name %}" class="space-y-3">
+        {% csrf_token %}
+        <div class="pt-2">
+          <label for="post-title" class="mb-2 block text-sm font-medium text-gray-900">Title</label>
+          <input id="post-title" type="text" name="title" placeholder="Give your post a title" class="modal-field" required>
+        </div>
+        <div>
+          <label for="post-content" class="mb-2 block text-sm font-medium text-gray-900">Content</label>
+          <textarea id="post-content" name="content" placeholder="What do you want to share?" class="modal-field min-h-[10rem] resize-y" rows="6" required></textarea>
+        </div>
+        <div class="flex gap-3 pt-3">
+          <button type="button" id="cancel-post" class="flex-1 cursor-pointer rounded-full border border-gray-300 py-2.5 px-4 text-sm font-medium text-gray-700 hover:bg-gray-100">Cancel</button>
+          <button type="submit" class="flex-1 cursor-pointer rounded-full bg-purple-600 py-2.5 px-4 text-sm font-semibold text-white hover:bg-purple-700">Create Post</button>
+        </div>
+      </form>
     </div>
   </div>
   {% endif %}
 
-  <!-- Create Subthread Modal (same as index) -->
   {% if user.is_authenticated %}
-  <div id="create-subthread-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50" style="display: none;">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-96 shadow-lg rounded-md bg-white">
-      <div class="mt-3">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Create New Subthread</h3>
-        <form method="post" action="{% url 'main:create_subthread' %}" class="space-y-3">
-          {% csrf_token %}
-          <input type="text" name="name" placeholder="Subthread name (e.g. python)" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" required maxlength="100">
-          <textarea name="description" placeholder="Description (optional)" class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500" rows="4"></textarea>
-          <div class="flex space-x-3 pt-4">
-            <button type="button" id="cancel-subthread" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Cancel</button>
-            <button type="submit" class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 font-medium">Create Subthread</button>
-          </div>
-        </form>
-        {% if error %}
-          <p class="text-red-500 text-sm mt-3 p-3 bg-red-50 border rounded">{{ error }}</p>
-        {% endif %}
+  <div id="create-subthread-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card relative p-6 sm:p-7">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">New Community</p>
+          <h3 class="mt-2 text-2xl font-semibold text-gray-900">Create a subthread</h3>
+          <p class="modal-note mt-2">Give your community a clear name and a short description so people know what belongs there.</p>
+        </div>
+        <button
+          type="button"
+          id="close-subthread-x"
+          class="flex h-8 w-8 cursor-pointer items-center justify-center self-start text-2xl leading-none text-gray-500 hover:text-gray-900"
+          aria-label="Close create subthread modal"
+        >
+          &times;
+        </button>
       </div>
+
+      <form method="post" action="{% url 'main:create_subthread' %}" class="space-y-3">
+        {% csrf_token %}
+        <div class="pt-2">
+          <label for="subthread-name" class="mb-2 block text-sm font-medium text-gray-900">Name</label>
+          <input id="subthread-name" type="text" name="name" placeholder="e.g. python" class="modal-field" required maxlength="100">
+        </div>
+        <div>
+          <label for="subthread-description" class="mb-2 block text-sm font-medium text-gray-900">Description</label>
+          <textarea id="subthread-description" name="description" placeholder="What is this subthread about?" class="modal-field min-h-[8rem] resize-y" rows="4"></textarea>
+        </div>
+        <div class="flex gap-3 pt-3">
+          <button type="button" id="cancel-subthread" class="flex-1 cursor-pointer rounded-full border border-gray-300 py-2.5 px-4 text-sm font-medium text-gray-700 hover:bg-gray-100">Cancel</button>
+          <button type="submit" class="flex-1 cursor-pointer rounded-full bg-purple-600 py-2.5 px-4 text-sm font-semibold text-white hover:bg-purple-700">Create Subthread</button>
+        </div>
+      </form>
+      {% if error %}
+        <p class="mt-4 rounded-xl border border-red-300/50 bg-red-50/70 p-3 text-sm text-red-500">{{ error }}</p>
+      {% endif %}
     </div>
   </div>
   {% endif %}
-
 </div>
 
-  <script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Subthread modal
-  const subModal = document.getElementById('create-subthread-modal');
-  const subBtn = document.getElementById('create-subthread-btn');
-  const subCancel = document.getElementById('cancel-subthread');
+  const setupModal = ({ modalId, openId, cancelId, closeId }) => {
+    const modal = document.getElementById(modalId);
+    const openButton = document.getElementById(openId);
+    const cancelButton = document.getElementById(cancelId);
+    const closeButton = document.getElementById(closeId);
 
-  if (subBtn && subModal && subCancel) {
-    subBtn.addEventListener('click', () => {
-      subModal.style.display = 'block';
-    });
+    if (!modal) return;
 
-    subCancel.addEventListener('click', () => {
-      subModal.style.display = 'none';
-    });
+    const closeModal = () => {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    };
 
-    subModal.addEventListener('click', (e) => {
-      if (e.target === subModal) {
-        subModal.style.display = 'none';
+    const openModal = () => {
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+    };
+
+    if (openButton) {
+      openButton.addEventListener('click', openModal);
+    }
+
+    if (cancelButton) {
+      cancelButton.addEventListener('click', closeModal);
+    }
+
+    if (closeButton) {
+      closeButton.addEventListener('click', closeModal);
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
       }
     });
-  }
 
-  // Post modal
-  const postModal = document.getElementById('create-post-modal');
-  const postBtn = document.getElementById('create-post-btn');
-  const postCancel = document.getElementById('cancel-post');
-
-  if (postBtn && postModal && postCancel) {
-    postBtn.addEventListener('click', () => {
-      postModal.style.display = 'block';
-    });
-
-    postCancel.addEventListener('click', () => {
-      postModal.style.display = 'none';
-    });
-
-    postModal.addEventListener('click', (e) => {
-      if (e.target === postModal) {
-        postModal.style.display = 'none';
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+        closeModal();
       }
     });
-  }
+  };
+
+  setupModal({
+    modalId: 'create-subthread-modal',
+    openId: 'create-subthread-btn',
+    cancelId: 'cancel-subthread',
+    closeId: 'close-subthread-x',
+  });
+
+  setupModal({
+    modalId: 'create-post-modal',
+    openId: 'create-post-btn',
+    cancelId: 'cancel-post',
+    closeId: 'close-post-x',
+  });
 });
 </script>
-
 {% endblock %}

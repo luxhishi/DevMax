@@ -10,6 +10,7 @@
   <style>
     :root {
       color-scheme: light;
+      --header-height: 4.75rem;
       --page-bg: #f3f4f6;
       --surface: #ffffff;
       --surface-soft: #e5e7eb;
@@ -50,6 +51,11 @@
       background-color: var(--page-bg) !important;
       color: var(--text-main) !important;
       transition: background-color 180ms ease, color 180ms ease;
+    }
+
+    main {
+      position: relative;
+      z-index: 0;
     }
 
     header,
@@ -236,6 +242,281 @@
       transform: translateX(1.42rem);
       background: linear-gradient(135deg, #f5d76e, #f59e0b);
     }
+
+    .app-shell {
+      position: relative;
+      z-index: 0;
+      width: min(100%, 1600px);
+      margin: 0 auto;
+      padding: 1rem clamp(1rem, 2vw, 2rem) 2rem;
+    }
+
+    .panel-surface {
+      background-color: var(--surface);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 14px 28px var(--shadow-color);
+    }
+
+    .soft-chip {
+      background-color: var(--surface-soft);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+    }
+
+    .feed-card {
+      border: 1px solid var(--border-color);
+      background-color: var(--surface);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+
+    .feed-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(124, 58, 237, 0.28);
+      box-shadow: 0 18px 34px var(--shadow-color);
+    }
+
+    .vote-rail {
+      background-color: color-mix(in srgb, var(--surface-soft) 72%, transparent);
+      border-right: 1px solid var(--border-color);
+    }
+
+    .reddit-action {
+      border-radius: 9999px;
+      padding: 0.45rem 0.8rem;
+      background-color: color-mix(in srgb, var(--surface-soft) 68%, transparent);
+      color: var(--text-muted);
+      transition: background-color 150ms ease, color 150ms ease;
+    }
+
+    .reddit-action:hover {
+      background-color: var(--hover-surface);
+      color: var(--text-main);
+    }
+
+    .community-banner {
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.22), transparent 36%),
+        linear-gradient(135deg, color-mix(in srgb, var(--surface) 88%, #ede9fe), var(--surface));
+      border: 1px solid var(--border-color);
+    }
+
+    .landing-grid {
+      display: grid;
+      grid-template-columns: minmax(170px, 18vw) minmax(0, 1fr) minmax(200px, 22vw);
+      gap: clamp(0.75rem, 1.2vw, 1.5rem);
+      align-items: start;
+    }
+
+    .landing-panel {
+      background-color: var(--surface);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      box-shadow: 0 10px 24px var(--shadow-color);
+    }
+
+    .compact-feed-card {
+      border-radius: 0.7rem;
+    }
+
+    .composer-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.8rem 1rem;
+    }
+
+    .composer-avatar {
+      width: 1.9rem;
+      height: 1.9rem;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, var(--surface-soft), var(--border-color));
+      border: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .nav-chip-active {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .search-shell {
+      width: min(100%, 620px);
+      flex: 0 1 38rem;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      min-height: 3rem;
+      padding: 0.35rem 0.7rem 0.35rem 0.4rem;
+      border-radius: 9999px;
+      border: 1px solid color-mix(in srgb, var(--accent) 68%, var(--border-color));
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, rgba(255, 255, 255, 0.03)), var(--surface));
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent),
+        0 12px 28px rgba(0, 0, 0, 0.12);
+    }
+
+    .search-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.1rem;
+      height: 2.1rem;
+      border-radius: 9999px;
+      flex-shrink: 0;
+      color: #ffffff;
+      font-size: 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      box-shadow: 0 8px 16px color-mix(in srgb, var(--accent) 30%, transparent);
+    }
+
+    .search-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      text-align: center;
+      font-size: 0.95rem;
+      padding: 0.35rem 0;
+    }
+
+    .search-input:focus {
+      outline: none;
+    }
+
+    .search-divider {
+      width: 1px;
+      align-self: stretch;
+      background-color: color-mix(in srgb, var(--border-color) 85%, transparent);
+    }
+
+    .search-ask {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0 0.35rem;
+      color: var(--accent);
+      font-size: 0.88rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .landing-grid .vote-rail {
+      min-height: 100%;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: rgba(8, 13, 24, 0.48);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .modal-overlay.is-open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(100%, 34rem);
+      border-radius: 1.25rem;
+      border: 1px solid color-mix(in srgb, var(--border-color) 92%, transparent);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, rgba(255, 255, 255, 0.04)), var(--surface));
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    .modal-field {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 0.95rem;
+      padding: 0.9rem 1rem;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      background-color: color-mix(in srgb, var(--input-bg) 96%, transparent) !important;
+      transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+    }
+
+    .modal-field:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--accent) 70%, white 10%);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    .modal-note {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .rail-layer {
+      position: sticky;
+      top: calc(var(--header-height) + 1rem);
+      z-index: 30;
+      align-self: start;
+    }
+
+    @media (max-width: 1280px) {
+      .landing-grid {
+        grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(190px, 240px);
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .landing-grid {
+        grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+      }
+
+      .landing-grid > aside:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .search-shell {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-shell {
+        padding-inline: 0.85rem;
+      }
+
+      .landing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .landing-grid > aside:first-child,
+      .landing-grid > aside:last-child {
+        grid-column: auto;
+      }
+
+      .search-bar {
+        gap: 0.55rem;
+        padding-right: 0.55rem;
+      }
+
+      .search-input {
+        text-align: left;
+        font-size: 0.9rem;
+      }
+
+      .search-ask span:last-child {
+        display: none;
+      }
+
+      .rail-layer {
+        position: static;
+      }
+    }
   </style>
 </head>
 <body
@@ -244,7 +525,7 @@
   {% if user.is_authenticated %}data-display-mode-url="{% url 'main:update_display_mode' %}"{% endif %}
 >
 
-<header class="bg-white border-b navbar-shell">
+<header class="fixed inset-x-0 top-0 z-50 bg-white border-b navbar-shell">
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
     <h1 class="text-xl font-bold text-purple-600 shrink-0">
       <a href="{% url 'main:index' %}" class="hover:text-purple-700" aria-label="Go to DevMax homepage">
@@ -252,11 +533,22 @@
       </a>
     </h1>
 
-    <input
-      type="text"
-      placeholder="Search DevMax..."
-      class="w-1/3 min-w-0 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-    >
+    <div class="search-shell">
+      <div class="search-bar">
+        <span class="search-brand" aria-hidden="true">D</span>
+        <input
+          type="text"
+          placeholder="Find anything"
+          class="search-input"
+          aria-label="Search DevMax"
+        >
+        <span class="search-divider" aria-hidden="true"></span>
+        <button type="button" class="search-ask" aria-label="Ask DevMax">
+          <span aria-hidden="true">◎</span>
+          <span>Ask</span>
+        </button>
+      </div>
+    </div>
 
     <div class="flex items-center gap-3 shrink-0">
       {% if user.is_authenticated %}
@@ -327,7 +619,7 @@
   </div>
 </header>
 
-<main class="min-h-screen">
+<main class="min-h-screen" style="padding-top: var(--header-height);">
   {% block content %}
   {% endblock %}
 </main>

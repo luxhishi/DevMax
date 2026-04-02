@@ -1,12 +1,12 @@
 {% load humanize %}
-<div class="border p-3 rounded-lg bg-white flex flex-col justify-between">
-  <div>
-    <a href="{% url 'main:subthread_detail' sub.name %}" class="font-semibold text-sm hover:underline">d/{{ sub.name }}</a>
-    <p class="text-xs text-gray-500">{{ sub.description }}</p>
-    <p class="text-xs text-gray-400 mt-1">{{ sub.members|intcomma }} members</p>
-  </div>
-  <div class="mt-2">
-    <button class="bg-purple-600 text-white px-3 py-1 text-xs rounded hover:bg-purple-700">
+<div class="landing-panel p-3">
+  <div class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <a href="{% url 'main:subthread_detail' sub.name %}" class="text-xs font-semibold hover:underline">d/{{ sub.name }}</a>
+      <p class="mt-1 text-[11px] leading-4 text-gray-500">{{ sub.description|default:"A focused place for developer discussion." }}</p>
+      <p class="mt-2 text-[10px] text-gray-400">{{ sub.members|intcomma }} members</p>
+    </div>
+    <button class="rounded-md border px-2.5 py-1 text-[10px] font-semibold text-gray-600 hover:bg-gray-100">
       Join
     </button>
   </div>
