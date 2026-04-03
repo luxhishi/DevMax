@@ -1,49 +1,108 @@
 <div
-  class="feed-card compact-feed-card overflow-hidden cursor-pointer"
+  class="feed-card cursor-pointer"
   role="link"
   tabindex="0"
   onclick="window.location.href='{{ post.detail_url }}'"
   onkeydown="if (event.key === 'Enter') window.location.href='{{ post.detail_url }}'"
 >
-  <div class="flex">
-    <div class="vote-rail flex w-10 shrink-0 flex-col items-center py-4 text-gray-500">
-      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+  <div class="feed-card-row">
+    <div class="vote-rail">
+      {% if user.is_authenticated %}
+      <form
+        method="post"
+        action="{% url 'main:vote_post' post.id %}"
+        class="vote-form"
+        onclick="event.stopPropagation()"
+        onsubmit="event.stopPropagation()"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="vote_type" value="up">
+        {% if post.vote_return_url %}
+        <input type="hidden" name="next" value="{{ post.vote_return_url }}">
+        {% endif %}
+        <button
+          type="submit"
+          class="vote-button {% if post.current_user_vote == 'up' %}vote-up-active{% else %}vote-neutral{% endif %}"
+          aria-label="Upvote post"
+          onclick="event.stopPropagation()"
+          onkeydown="event.stopPropagation()"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15l6-6 6 6"/>
+          </svg>
+        </button>
+      </form>
+      {% else %}
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15l6-6 6 6"/>
       </svg>
-      <span class="mt-1.5 text-[11px] font-semibold text-gray-700 leading-none">{{ post.upvotes }}</span>
-      <svg class="mt-1.5 h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      {% endif %}
+
+      <span class="vote-score">{{ post.upvotes }}</span>
+
+      {% if user.is_authenticated %}
+      <form
+        method="post"
+        action="{% url 'main:vote_post' post.id %}"
+        class="vote-form"
+        onclick="event.stopPropagation()"
+        onsubmit="event.stopPropagation()"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="vote_type" value="down">
+        {% if post.vote_return_url %}
+        <input type="hidden" name="next" value="{{ post.vote_return_url }}">
+        {% endif %}
+        <button
+          type="submit"
+          class="vote-button vote-down {% if post.current_user_vote == 'down' %}vote-down-active{% else %}vote-neutral{% endif %}"
+          aria-label="Downvote post"
+          onclick="event.stopPropagation()"
+          onkeydown="event.stopPropagation()"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9l-6 6-6-6"/>
+          </svg>
+        </button>
+      </form>
+      {% else %}
+      <svg class="vote-down" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9l-6 6-6-6"/>
       </svg>
+      {% endif %}
     </div>
 
-    <div class="min-w-0 flex-1 p-3.5">
-      <div class="flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+    <div class="feed-card-main">
+      <div class="feed-meta">
         <span class="font-semibold text-purple-600">d/{{ post.subthread }}</span>
         <span>&bull;</span>
-        <span>u/{{ post.author }}</span>
+        <span>Posted by u/{{ post.author }}</span>
         <span>&bull;</span>
         <span>{{ post.timeAgo }}</span>
       </div>
 
-      <h2 class="mt-2 text-base font-semibold leading-snug text-gray-900 sm:text-[1.05rem]">{{ post.title }}</h2>
+      <h2 class="feed-title">{{ post.title }}</h2>
 
-      <p class="mt-1.5 text-xs leading-5 text-gray-700 sm:text-[13px]">{{ post.content }}</p>
+      <div class="feed-body post-rich-content">{{ post.content|render_post_content }}</div>
 
-      <div class="mt-4 flex flex-wrap items-center gap-2">
+      <div class="feed-tags">
         {% for tag in post.tags %}
-          <span class="soft-chip rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none">
-            {{ tag }}
-          </span>
+          <span class="feed-tag">{{ tag }}</span>
         {% endfor %}
       </div>
 
-      <div class="mt-4 flex flex-wrap items-center gap-4 text-[11px] text-gray-500">
-        <a href="{{ post.comments_url }}" class="inline-flex items-center gap-1 hover:text-gray-900" onclick="event.stopPropagation()">
-          <span class="font-medium">{{ post.comments }}</span>
-          <span>Comments</span>
+      <div class="feed-actions">
+        <a href="{{ post.comments_url }}" class="action-chip" aria-label="View comments" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()">
+          <svg class="feed-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 9h10M7 13h6m-7 7l2.8-3H18a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v6a3 3 0 003 3h.2L6 20z"/>
+          </svg>
+          <span class="action-chip-text">{{ post.comments }}</span>
         </a>
-        <button type="button" class="inline-flex items-center gap-1 hover:text-gray-900" onclick="event.stopPropagation()">
-          Share
+        <button type="button" class="action-chip" aria-label="Share post" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()">
+          <svg class="feed-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.7 12.7L15.3 16m0-8-6.6 3.3M18 6a2.25 2.25 0 110-4.5A2.25 2.25 0 0118 6zm-12 8.25a2.25 2.25 0 110-4.5 2.25 2.25 0 010 4.5zM18 22.5a2.25 2.25 0 110-4.5 2.25 2.25 0 010 4.5z"/>
+          </svg>
+          <span class="action-chip-text">Share</span>
         </button>
       </div>
     </div>

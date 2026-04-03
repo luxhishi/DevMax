@@ -1,0 +1,147 @@
+Watching for file changes with StatReloader
+[03/Apr/2026 22:43:56] "GET / HTTP/1.1" 302 0
+[03/Apr/2026 22:43:57] "GET /main/ HTTP/1.1" 200 29233
+[03/Apr/2026 22:43:57,160] - Broken pipe from ('127.0.0.1', 61430)
+[03/Apr/2026 22:45:14] "GET / HTTP/1.1" 302 0
+[03/Apr/2026 22:45:16] "GET /main/ HTTP/1.1" 200 29233
+[03/Apr/2026 22:45:16] "GET /static/css/dist/styles.css?v=1775227516 HTTP/1.1" 200 15296
+Not Found: /favicon.ico
+[03/Apr/2026 22:45:17] "GET /favicon.ico HTTP/1.1" 404 2650
+[03/Apr/2026 22:45:20] "GET /main/d/python/2/ HTTP/1.1" 200 22851
+[03/Apr/2026 22:45:20] "GET /static/css/dist/styles.css?v=1775227520 HTTP/1.1" 200 15296
+[03/Apr/2026 22:45:22] "GET /main/trending/ HTTP/1.1" 302 0
+[03/Apr/2026 22:45:22] "GET /main/trending/ HTTP/1.1" 302 0
+[03/Apr/2026 22:45:23] "GET /main/trending/ HTTP/1.1" 302 0
+[03/Apr/2026 22:45:23,219] - Broken pipe from ('127.0.0.1', 56341)
+[03/Apr/2026 22:45:23,635] - Broken pipe from ('127.0.0.1', 56738)
+[03/Apr/2026 22:45:24,067] - Broken pipe from ('127.0.0.1', 50784)
+[03/Apr/2026 22:45:24] "GET /main/ HTTP/1.1" 200 29233
+[03/Apr/2026 22:45:24] "GET /static/css/dist/styles.css?v=1775227524 HTTP/1.1" 200 15296
+[03/Apr/2026 22:45:39] "GET /main/login/ HTTP/1.1" 200 24107
+[03/Apr/2026 22:45:39] "GET /static/css/dist/styles.css?v=1775227539 HTTP/1.1" 200 15296
+[03/Apr/2026 22:45:41] "POST /main/login/ HTTP/1.1" 200 24249
+[03/Apr/2026 22:45:41] "GET /static/css/dist/styles.css?v=1775227541 HTTP/1.1" 200 15296
+[03/Apr/2026 22:45:46] "GET /main/login/ HTTP/1.1" 200 24107
+[03/Apr/2026 22:45:46] "GET /static/css/dist/styles.css?v=1775227546 HTTP/1.1" 200 15296
+[03/Apr/2026 22:45:50,356] - Broken pipe from ('127.0.0.1', 56434)
+[03/Apr/2026 22:46:24] "GET / HTTP/1.1" 302 0
+[03/Apr/2026 22:46:25] "GET / HTTP/1.1" 302 0
+[03/Apr/2026 22:46:25,525] - Broken pipe from ('127.0.0.1', 60905)
+[03/Apr/2026 22:46:26] "GET /main/ HTTP/1.1" 200 29233
+[03/Apr/2026 22:46:26] "GET /static/css/dist/styles.css?v=1775227586 HTTP/1.1" 200 15296
+[03/Apr/2026 22:46:29] "GET /main/d/django/1/ HTTP/1.1" 200 25677
+[03/Apr/2026 22:46:29] "GET /static/css/dist/styles.css?v=1775227589 HTTP/1.1" 200 15296
+[03/Apr/2026 22:46:41] "GET /main/trending/ HTTP/1.1" 302 0
+[03/Apr/2026 22:46:43] "GET /main/ HTTP/1.1" 200 29233
+[03/Apr/2026 22:46:43] "GET /static/css/dist/styles.css?v=1775227603 HTTP/1.1" 200 15296
+[03/Apr/2026 22:46:47,855] - Broken pipe from ('127.0.0.1', 61152)
+[03/Apr/2026 22:46:48,185] - Broken pipe from ('127.0.0.1', 60798)
+[03/Apr/2026 22:46:48] "GET /main/ HTTP/1.1" 200 29233
+[03/Apr/2026 22:46:48] "GET /static/css/dist/styles.css?v=1775227608 HTTP/1.1" 200 15296
+[03/Apr/2026 22:46:48,457] - Broken pipe from ('127.0.0.1', 60017)
+[03/Apr/2026 22:46:49] "GET /main/login/ HTTP/1.1" 200 24107
+[03/Apr/2026 22:46:49] "GET /static/css/dist/styles.css?v=1775227609 HTTP/1.1" 200 15296
+[03/Apr/2026 22:46:52] "GET /main/trending/ HTTP/1.1" 302 0
+[03/Apr/2026 22:46:53] "GET /main/ HTTP/1.1" 200 29233
+[03/Apr/2026 22:46:53] "GET /static/css/dist/styles.css?v=1775227613 HTTP/1.1" 200 15296
+[03/Apr/2026 22:53:02] "GET / HTTP/1.1" 302 0
+[03/Apr/2026 22:53:03] "GET /main/ HTTP/1.1" 200 29230
+[03/Apr/2026 22:53:03] "GET /static/css/dist/styles.css?v=1775227983 HTTP/1.1" 200 15296
+[03/Apr/2026 22:53:22] "GET /main/login/ HTTP/1.1" 200 24107
+[03/Apr/2026 22:53:22] "GET /static/css/dist/styles.css?v=1775228002 HTTP/1.1" 200 15296
+[03/Apr/2026 22:53:26] "POST /main/login/ HTTP/1.1" 200 24249
+[03/Apr/2026 22:53:26] "GET /static/css/dist/styles.css?v=1775228006 HTTP/1.1" 200 15296
+[03/Apr/2026 23:00:44] "GET /main/signup/ HTTP/1.1" 200 24987
+[03/Apr/2026 23:00:44] "GET /static/css/dist/styles.css?v=1775228444 HTTP/1.1" 200 15296
+[03/Apr/2026 23:00:45,065] - Broken pipe from ('127.0.0.1', 51386)
+[03/Apr/2026 23:01:03] "POST /main/signup/ HTTP/1.1" 200 25179
+[03/Apr/2026 23:01:03] "GET /static/css/dist/styles.css?v=1775228463 HTTP/1.1" 200 15296
+[03/Apr/2026 23:01:06] "GET /main/login/ HTTP/1.1" 200 24107
+[03/Apr/2026 23:01:06] "GET /static/css/dist/styles.css?v=1775228466 HTTP/1.1" 200 15296
+[03/Apr/2026 23:01:09] "POST /main/login/ HTTP/1.1" 302 0
+[03/Apr/2026 23:01:11] "GET /main/ HTTP/1.1" 200 34378
+[03/Apr/2026 23:01:11] "GET /static/css/dist/styles.css?v=1775228471 HTTP/1.1" 200 15296
+[03/Apr/2026 23:01:22] "POST /main/display-mode/ HTTP/1.1" 200 24
+[03/Apr/2026 23:01:22] "POST /main/display-mode/ HTTP/1.1" 200 24
+[03/Apr/2026 23:01:22] "POST /main/display-mode/ HTTP/1.1" 200 25
+C:\Users\User\Documents\DevMax\DevMax\main\views.py changed, reloading.
+Watching for file changes with StatReloader
+C:\Users\User\Documents\DevMax\DevMax\main\views.py changed, reloading.
+Watching for file changes with StatReloader
+[03/Apr/2026 23:48:40] "GET /main/ HTTP/1.1" 200 43595
+[03/Apr/2026 23:48:41] "GET /static/css/dist/styles.css?v=1775231320 HTTP/1.1" 200 15296
+[03/Apr/2026 23:49:24] "GET /main/profile/ HTTP/1.1" 200 37833
+[03/Apr/2026 23:49:24] "GET /static/css/dist/styles.css?v=1775231364 HTTP/1.1" 200 15296
+[03/Apr/2026 23:49:30] "GET /main/profile/?tab=posts HTTP/1.1" 200 37827
+[03/Apr/2026 23:49:30] "GET /static/css/dist/styles.css?v=1775231370 HTTP/1.1" 200 15296
+[03/Apr/2026 23:49:33,688] - Broken pipe from ('127.0.0.1', 52368)
+[03/Apr/2026 23:49:34] "GET /main/profile/?tab=comments HTTP/1.1" 200 37838
+[03/Apr/2026 23:49:34] "GET /static/css/dist/styles.css?v=1775231374 HTTP/1.1" 200 15296
+[03/Apr/2026 23:49:36] "GET /main/profile/?tab=overview HTTP/1.1" 200 37833
+[03/Apr/2026 23:49:36] "GET /static/css/dist/styles.css?v=1775231376 HTTP/1.1" 200 15296
+[03/Apr/2026 23:49:41] "POST /main/display-mode/ HTTP/1.1" 200 25
+[03/Apr/2026 23:49:42] "POST /main/display-mode/ HTTP/1.1" 200 24
+[03/Apr/2026 23:49:46] "GET /main/ HTTP/1.1" 200 43595
+[03/Apr/2026 23:49:46] "GET /static/css/dist/styles.css?v=1775231386 HTTP/1.1" 200 15296
+[03/Apr/2026 23:50:08] "GET /main/d/django/3/ HTTP/1.1" 200 39077
+[03/Apr/2026 23:50:08] "GET /static/css/dist/styles.css?v=1775231408 HTTP/1.1" 200 15296
+[03/Apr/2026 23:50:27] "POST /main/d/django/3/comment/ HTTP/1.1" 302 0
+[03/Apr/2026 23:50:28] "GET /main/d/django/3/ HTTP/1.1" 200 41149
+[03/Apr/2026 23:50:28] "GET /static/css/dist/styles.css?v=1775231428 HTTP/1.1" 200 15296
+[03/Apr/2026 23:56:25] "GET /main/ HTTP/1.1" 200 43595
+[03/Apr/2026 23:56:25] "GET /static/css/dist/styles.css?v=1775231785 HTTP/1.1" 200 15296
+[03/Apr/2026 23:56:38] "GET /main/d/python/2/ HTTP/1.1" 200 36685
+[03/Apr/2026 23:56:38] "GET /static/css/dist/styles.css?v=1775231798 HTTP/1.1" 200 15296
+[03/Apr/2026 23:56:43] "GET /main/ HTTP/1.1" 200 43595
+[03/Apr/2026 23:56:43] "GET /static/css/dist/styles.css?v=1775231803 HTTP/1.1" 200 15296
+[03/Apr/2026 23:56:49] "GET /main/d/python/ HTTP/1.1" 200 45685
+[03/Apr/2026 23:56:50] "GET /static/css/dist/styles.css?v=1775231809 HTTP/1.1" 200 15296
+[03/Apr/2026 23:57:16] "POST /main/create-subthread/ HTTP/1.1" 302 0
+[03/Apr/2026 23:57:17] "GET /main/d/c++/ HTTP/1.1" 200 46290
+[03/Apr/2026 23:57:17] "GET /static/css/dist/styles.css?v=1775231837 HTTP/1.1" 200 15296
+[03/Apr/2026 23:57:28] "GET /main/ HTTP/1.1" 200 49201
+[03/Apr/2026 23:57:28] "GET /static/css/dist/styles.css?v=1775231848 HTTP/1.1" 200 15296
+[03/Apr/2026 23:57:36] "GET /main/d/python/ HTTP/1.1" 200 47988
+[03/Apr/2026 23:57:36] "GET /static/css/dist/styles.css?v=1775231856 HTTP/1.1" 200 15296
+[03/Apr/2026 23:57:43] "GET /main/d/c++/ HTTP/1.1" 200 46290
+[03/Apr/2026 23:57:43] "GET /static/css/dist/styles.css?v=1775231863 HTTP/1.1" 200 15296
+[03/Apr/2026 23:58:14] "GET /main/d/django/3/ HTTP/1.1" 200 46556
+[03/Apr/2026 23:58:14] "GET /static/css/dist/styles.css?v=1775231894 HTTP/1.1" 200 15296
+[03/Apr/2026 23:59:47] "GET /main/d/django/3/ HTTP/1.1" 200 46556
+[03/Apr/2026 23:59:47] "GET /static/css/dist/styles.css?v=1775231987 HTTP/1.1" 200 15296
+[04/Apr/2026 00:00:09] "POST /main/d/django/3/comment/ HTTP/1.1" 302 0
+[04/Apr/2026 00:00:10] "GET /main/d/django/3/ HTTP/1.1" 200 50211
+[04/Apr/2026 00:00:10] "GET /static/css/dist/styles.css?v=1775232010 HTTP/1.1" 200 15296
+[04/Apr/2026 00:01:46] "POST /main/d/django/3/comment/ HTTP/1.1" 302 0
+[04/Apr/2026 00:01:47] "GET /main/d/django/3/ HTTP/1.1" 200 52371
+[04/Apr/2026 00:01:47] "GET /static/css/dist/styles.css?v=1775232107 HTTP/1.1" 200 15296
+[04/Apr/2026 00:02:58] "GET /main/d/django/3/ HTTP/1.1" 200 54812
+[04/Apr/2026 00:02:58] "GET /static/css/dist/styles.css?v=1775232178 HTTP/1.1" 200 15296
+C:\Users\User\Documents\DevMax\DevMax\main\views.py changed, reloading.
+Watching for file changes with StatReloader
+C:\Users\User\Documents\DevMax\DevMax\main\views.py changed, reloading.
+Watching for file changes with StatReloader
+C:\Users\User\Documents\DevMax\DevMax\DevMax\settings.py changed, reloading.
+Watching for file changes with StatReloader
+C:\Users\User\Documents\DevMax\DevMax\main\templatetags\post_formatting.py changed, reloading.
+Watching for file changes with StatReloader
+C:\Users\User\Documents\DevMax\DevMax\main\views.py changed, reloading.
+Watching for file changes with StatReloader
+[04/Apr/2026 01:14:40] "GET /main/d/python/2/ HTTP/1.1" 200 57926
+[04/Apr/2026 01:14:40] "GET /static/css/dist/styles.css?v=1775236480 HTTP/1.1" 200 15296
+[04/Apr/2026 01:14:43] "GET /main/d/python/2/ HTTP/1.1" 200 57926
+[04/Apr/2026 01:14:43] "GET /static/css/dist/styles.css?v=1775236483 HTTP/1.1" 200 15296
+[04/Apr/2026 01:14:46] "GET /main/ HTTP/1.1" 200 77746
+[04/Apr/2026 01:14:46] "GET /static/css/dist/styles.css?v=1775236486 HTTP/1.1" 200 15296
+[04/Apr/2026 01:14:48] "GET /main/d/c++/10/?open_comment=1 HTTP/1.1" 200 57938
+[04/Apr/2026 01:14:48] "GET /static/css/dist/styles.css?v=1775236488 HTTP/1.1" 200 15296
+[04/Apr/2026 01:15:20] "GET /main/d/django/1/?open_comment=1 HTTP/1.1" 200 65609
+[04/Apr/2026 01:15:20] "GET /static/css/dist/styles.css?v=1775236520 HTTP/1.1" 200 15296
+[04/Apr/2026 01:15:25] "GET /main/d/django/1/?open_comment=1 HTTP/1.1" 200 65609
+[04/Apr/2026 01:15:25] "GET /static/css/dist/styles.css?v=1775236525 HTTP/1.1" 200 15296
+C:\Users\User\Documents\DevMax\DevMax\main\views.py changed, reloading.
+Watching for file changes with StatReloader
+C:\Users\User\Documents\DevMax\DevMax\main\views.py changed, reloading.
+Watching for file changes with StatReloader
+C:\Users\User\Documents\DevMax\DevMax\main\urls.py changed, reloading.
+Watching for file changes with StatReloader

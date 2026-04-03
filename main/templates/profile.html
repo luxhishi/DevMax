@@ -4,56 +4,118 @@
 <div class="app-shell pt-2">
   <div class="landing-grid">
     <aside class="hidden self-start lg:block rail-layer">
-        {% include "components/sidebar.html" %}
+      {% include "components/sidebar.html" %}
     </aside>
 
     <div class="min-w-0 space-y-4">
       <section class="landing-panel overflow-hidden">
-        <div class="h-28 bg-gradient-to-r from-purple-600/70 via-purple-500/40 to-transparent"></div>
-        <div class="px-6 pb-6">
-          <div class="-mt-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div class="flex items-end gap-4">
-              <div class="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-purple-600 text-3xl font-bold text-white shadow">
-                {{ profile_user.username|first|upper }}
+        <div class="profile-banner"></div>
+        <div class="profile-card-body">
+          <div class="profile-head">
+            <div class="profile-head-top">
+              <div class="profile-identity">
+                <div class="profile-avatar">{{ profile_user.username|first|upper }}</div>
+                <div class="profile-copy">
+                  <p class="profile-kicker">Profile</p>
+                  <h1 class="profile-name">u/{{ profile_user.username }}</h1>
+                  <p class="profile-subtitle">Developer on DevMax</p>
+                </div>
               </div>
-              <div class="pb-1">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500">Profile</p>
-                <h1 class="mt-1 text-3xl font-bold text-gray-900 sm:text-4xl">u/{{ profile_user.username }}</h1>
-                <p class="mt-1 text-sm text-gray-500">Developer on DevMax</p>
+
+              <div class="profile-metrics">
+                <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ post_count }} posts</span>
+                <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ comment_count }} comments</span>
+                <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ subthread_count }} subthreads</span>
               </div>
-            </div>
-            <div class="flex flex-wrap gap-2 text-xs text-gray-500 sm:text-sm">
-              <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ post_count }} posts</span>
-              <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ comment_count }} comments</span>
-              <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ subthread_count }} subthreads</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="landing-panel p-4 sm:p-5">
-        <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3 text-sm">
-          <span class="rounded-full bg-purple-600 px-3 py-1.5 font-semibold text-white">Overview</span>
-          <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">Posts</span>
-          <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">Comments</span>
+      <section class="landing-panel p-5 sm:p-6">
+        <div class="profile-tab-row">
+          <a
+            href="{% url 'main:profile' %}?tab=overview"
+            class="profile-tab{% if active_tab == 'overview' %} profile-tab-active{% endif %}"
+          >
+            Overview
+          </a>
+          <a
+            href="{% url 'main:profile' %}?tab=posts"
+            class="profile-tab{% if active_tab == 'posts' %} profile-tab-active{% endif %}"
+          >
+            Posts
+          </a>
+          <a
+            href="{% url 'main:profile' %}?tab=comments"
+            class="profile-tab{% if active_tab == 'comments' %} profile-tab-active{% endif %}"
+          >
+            Comments
+          </a>
         </div>
 
-        <div class="mt-4 space-y-4">
-          {% if recent_posts %}
-            {% for post in recent_posts %}
-              {% include "components/post_card.html" %}
-            {% endfor %}
+        <div class="profile-content">
+          {% if active_tab == 'overview' %}
+            {% if overview_items %}
+              {% for item in overview_items %}
+                {% if item.kind == 'post' %}
+                  {% with post=item.data %}
+                    {% include "components/post_card.html" %}
+                  {% endwith %}
+                {% else %}
+                  <a href="{{ item.data.detail_url }}" class="profile-comment-card block hover:bg-gray-50">
+                    <div class="profile-comment-meta">
+                      <span class="font-semibold text-purple-600">Comment</span>
+                      <span>&bull;</span>
+                      <span>d/{{ item.data.subthread }}</span>
+                      <span>&bull;</span>
+                      <span>{{ item.data.timeAgo }}</span>
+                    </div>
+                    <p class="mt-2 text-sm font-semibold text-gray-900">On {{ item.data.post_title }}</p>
+                    <p class="profile-comment-text">{{ item.data.content|truncatechars:180 }}</p>
+                  </a>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <div class="profile-empty">
+                No activity yet. Posts and comments you create will show up here.
+              </div>
+            {% endif %}
+          {% elif active_tab == 'posts' %}
+            {% if profile_posts %}
+              {% for post in profile_posts %}
+                {% include "components/post_card.html" %}
+              {% endfor %}
+            {% else %}
+              <div class="profile-empty">
+                No posts yet. Start a discussion in one of your subthreads.
+              </div>
+            {% endif %}
           {% else %}
-            <div class="rounded-2xl border border-dashed border-gray-300 p-8 text-center text-gray-500">
-              No posts yet. Start a discussion in one of your subthreads.
-            </div>
+            {% if profile_comments %}
+              {% for comment in profile_comments %}
+                <a href="{{ comment.detail_url }}" class="profile-comment-card block hover:bg-gray-50">
+                  <div class="profile-comment-meta">
+                    <span class="font-semibold text-purple-600">d/{{ comment.subthread }}</span>
+                    <span>&bull;</span>
+                    <span>{{ comment.timeAgo }}</span>
+                  </div>
+                  <p class="mt-2 text-sm font-semibold text-gray-900">On {{ comment.post_title }}</p>
+                  <p class="profile-comment-text">{{ comment.content|truncatechars:220 }}</p>
+                </a>
+              {% endfor %}
+            {% else %}
+              <div class="profile-empty">
+                No comments yet. Join a discussion and your replies will show up here.
+              </div>
+            {% endif %}
           {% endif %}
         </div>
       </section>
     </div>
 
     <aside class="space-y-4 self-start rail-layer">
-        <section class="landing-panel p-4">
+      <section class="landing-panel p-4">
         <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Stats</h2>
         <div class="mt-4 space-y-3">
           <div class="flex items-center justify-between text-sm">

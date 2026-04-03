@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -13,10 +14,15 @@ from django.views.decorators.http import require_POST
 from .models import Comment, Post, Subthread, UserPreference, Vote
 
 
-def _build_post_detail_url(post_id, subthread_name, return_to_subthread=None, anchor=None):
+def _build_post_detail_url(post_id, subthread_name, return_to_subthread=None, anchor=None, open_comment=False):
     url = reverse("main:post_detail", kwargs={"name": subthread_name, "post_id": post_id})
+    query_params = {}
     if return_to_subthread:
-        url = f"{url}?{urlencode({'from_subthread': return_to_subthread})}"
+        query_params["from_subthread"] = return_to_subthread
+    if open_comment:
+        query_params["open_comment"] = "1"
+    if query_params:
+        url = f"{url}?{urlencode(query_params)}"
     if anchor:
         url = f"{url}#{anchor}"
     return url
@@ -84,7 +90,7 @@ def _related_tags(subthread_name, title, content):
     return [subthread_name, "discussion", "tips"]
 
 
-def _serialize_post(post, return_to_subthread=None):
+def _serialize_post(post, return_to_subthread=None, current_user_vote="", vote_return_url=""):
     return {
         "id": post.id,
         "title": post.title,
@@ -96,7 +102,14 @@ def _serialize_post(post, return_to_subthread=None):
         "tags": _related_tags(post.subthread.name, post.title, post.content),
         "author": post.author.username,
         "detail_url": _build_post_detail_url(post.id, post.subthread.name, return_to_subthread=return_to_subthread),
-        "comments_url": _build_post_detail_url(post.id, post.subthread.name, return_to_subthread=return_to_subthread, anchor="comments"),
+        "comments_url": _build_post_detail_url(
+            post.id,
+            post.subthread.name,
+            return_to_subthread=return_to_subthread,
+            anchor="comments",
+        ),
+        "current_user_vote": current_user_vote,
+        "vote_return_url": vote_return_url,
     }
 
 
@@ -160,6 +173,17 @@ def _sidebar_context(request):
     }
 
 
+def _ensure_welcome_post(subthread):
+    return Post.objects.get_or_create(
+        subthread=subthread,
+        author=subthread.created_by,
+        title=f"Welcome to d/{subthread.name}!",
+        defaults={
+            "content": f"First post in d/{subthread.name}.",
+        },
+    )[0]
+
+
 def _post_detail_redirect(post_id, return_to_subthread=None):
     post = get_object_or_404(Post.objects.select_related("subthread"), id=post_id)
     return redirect(_build_post_detail_url(post_id, post.subthread.name, return_to_subthread=return_to_subthread))
@@ -178,10 +202,80 @@ def _sync_vote_totals(target):
     target.save(update_fields=["upvotes", "downvotes"])
 
 
+def _build_comment_tree(post, user):
+    comments = list(
+        Comment.objects.filter(post=post)
+        .select_related("author", "parent")
+        .order_by("created_at")
+    )
+    vote_map = {}
+    if user.is_authenticated and comments:
+        vote_map = dict(
+            Vote.objects.filter(
+                user=user,
+                comment_id__in=[comment.id for comment in comments],
+                post__isnull=True,
+            ).values_list("comment_id", "vote_type")
+        )
+
+    comment_lookup = {}
+    roots = []
+    for comment in comments:
+        comment.children = []
+        comment.current_user_vote = vote_map.get(comment.id, "")
+        comment.time_ago = _time_ago(comment.created_at)
+        comment.reply_count = 0
+        comment.reply_count_label = "0 replies"
+        comment_lookup[comment.id] = comment
+
+    for comment in comments:
+        parent = comment_lookup.get(comment.parent_id)
+        if parent is None:
+            roots.append(comment)
+        else:
+            parent.children.append(comment)
+
+    def annotate_reply_counts(node):
+        descendant_count = 0
+        for child in node.children:
+            descendant_count += 1 + annotate_reply_counts(child)
+        node.reply_count = descendant_count
+        node.reply_count_label = "1 reply" if descendant_count == 1 else f"{descendant_count} replies"
+        return descendant_count
+
+    for root in roots:
+        annotate_reply_counts(root)
+
+    return roots, len(comments)
+
+
+def _user_post_vote_map(user, posts):
+    if not user.is_authenticated or not posts:
+        return {}
+
+    return dict(
+        Vote.objects.filter(
+            user=user,
+            post_id__in=[post.id for post in posts],
+            comment__isnull=True,
+        ).values_list("post_id", "vote_type")
+    )
+
+
 def index(request):
     post_qs = Post.objects.all().select_related("subthread", "author").order_by("-upvotes", "-created_at")
     if post_qs.exists():
-        posts = [_serialize_post(post) for post in post_qs]
+        post_list = list(post_qs)
+        vote_map = _user_post_vote_map(request.user, post_list)
+        index_url = reverse("main:index")
+        posts = [
+            _serialize_post(
+                post,
+                current_user_vote=vote_map.get(post.id, ""),
+                vote_return_url=index_url,
+            )
+            for post in post_list
+        ]
     else:
         posts = _fake_posts()
 
@@ -193,8 +287,72 @@ def trending(request):
     return redirect("main:index")
 
 
+def search(request):
+    query = request.GET.get("q", "").strip()
+    scope_name = request.GET.get("scope", "").strip().lower()
+    scope_subthread = Subthread.objects.filter(name=scope_name).first() if scope_name else None
+    search_scope_name = scope_subthread.name if scope_subthread else ""
+
+    post_results = []
+    subthread_results = []
+    post_total = 0
+    subthread_total = 0
+
+    if query:
+        if scope_subthread:
+            post_qs = (
+                Post.objects.filter(subthread=scope_subthread)
+                .select_related("subthread", "author")
+                .filter(Q(title__icontains=query) | Q(content__icontains=query))
+                .order_by("-upvotes", "-created_at")
+            )
+        else:
+            post_qs = (
+                Post.objects.select_related("subthread", "author")
+                .filter(
+                    Q(title__icontains=query)
+                    | Q(content__icontains=query)
+                    | Q(subthread__name__icontains=query)
+                )
+                .order_by("-upvotes", "-created_at")
+            )
+            subthread_results = list(
+                Subthread.objects.filter(
+                    Q(name__icontains=query) | Q(description__icontains=query)
+                ).order_by("name")
+            )
+            subthread_total = len(subthread_results)
+
+        post_list = list(post_qs)
+        post_total = len(post_list)
+        vote_map = _user_post_vote_map(request.user, post_list)
+        search_return_url = request.get_full_path()
+        post_results = [
+            _serialize_post(
+                post,
+                return_to_subthread=search_scope_name or None,
+                current_user_vote=vote_map.get(post.id, ""),
+                vote_return_url=search_return_url,
+            )
+            for post in post_list
+        ]
+
+    context = {
+        "query": query,
+        "search_query": query,
+        "search_scope_name": search_scope_name,
+        "post_results": post_results,
+        "subthread_results": subthread_results,
+        "post_total": post_total,
+        "subthread_total": subthread_total,
+        **_sidebar_context(request),
+    }
+    return render(request, "search_results.html", context)
+
+
 def post_detail(request, name, post_id):
     return_to_subthread = request.GET.get("from_subthread", "").strip()
+    open_comment_modal = request.user.is_authenticated and request.GET.get("open_comment") == "1"
     if return_to_subthread and Subthread.objects.filter(name=return_to_subthread).exists():
         back_url = reverse("main:subthread_detail", kwargs={"name": return_to_subthread})
     else:
@@ -213,31 +371,7 @@ def post_detail(request, name, post_id):
                 .first()
                 or ""
             )
-        comments = list(
-            Comment.objects.filter(post=post, parent=None)
-            .select_related("author")
-            .prefetch_related("replies__author")
-        )
-        comment_vote_map = {}
-        if request.user.is_authenticated and comments:
-            comment_ids = [comment.id for comment in comments]
-            reply_ids = [reply.id for comment in comments for reply in comment.replies.all()]
-            tracked_comment_ids = comment_ids + reply_ids
-            if tracked_comment_ids:
-                comment_vote_map = dict(
-                    Vote.objects.filter(
-                        user=request.user,
-                        comment_id__in=tracked_comment_ids,
-                        post__isnull=True,
-                    ).values_list("comment_id", "vote_type")
-                )
-
-        for comment in comments:
-            comment.current_user_vote = comment_vote_map.get(comment.id, "")
-            comment.time_ago = _time_ago(comment.created_at)
-            for reply in comment.replies.all():
-                reply.current_user_vote = comment_vote_map.get(reply.id, "")
-                reply.time_ago = _time_ago(reply.created_at)
+        comments, total_comment_count = _build_comment_tree(post, request.user)
 
         post_data = {
             "id": post.id,
@@ -246,7 +380,7 @@ def post_detail(request, name, post_id):
             "author": post.author.username,
             "upvotes": post.upvotes,
             "downvotes": post.downvotes,
-            "comments": len(comments) + sum(comment.replies.count() for comment in comments),
+            "comments": total_comment_count,
             "timeAgo": _time_ago(post.created_at),
             "content": post.content,
             "tags": _related_tags(post.subthread.name, post.title, post.content),
@@ -260,6 +394,8 @@ def post_detail(request, name, post_id):
                 "back_url": back_url,
                 "current_user_vote": current_user_vote,
                 "return_to_subthread": return_to_subthread,
+                "open_comment_modal": open_comment_modal,
+                "search_query": request.GET.get("q", "").strip(),
             },
         )
     except Post.DoesNotExist:
@@ -303,6 +439,8 @@ def post_detail(request, name, post_id):
                 "back_url": back_url,
                 "current_user_vote": "",
                 "return_to_subthread": return_to_subthread,
+                "open_comment_modal": open_comment_modal,
+                "search_query": request.GET.get("q", "").strip(),
             },
         )
 
@@ -332,6 +470,7 @@ def vote(request, post_id=None, comment_id=None):
 
     vote_type = request.POST.get("vote_type")
     return_to_subthread = request.POST.get("return_to_subthread", "").strip()
+    next_url = request.POST.get("next", "").strip()
     if vote_type not in ["up", "down"]:
         return JsonResponse({"error": "Invalid vote type"}, status=400)
 
@@ -357,6 +496,8 @@ def vote(request, post_id=None, comment_id=None):
 
     _sync_vote_totals(obj)
     target_post_id = post_id if post_id else obj.post.id
+    if next_url.startswith("/") and not next_url.startswith("//"):
+        return redirect(next_url)
     return _post_detail_redirect(target_post_id, return_to_subthread=return_to_subthread)
 
 
@@ -394,6 +535,10 @@ def signup_view(request):
 
 @login_required
 def profile_view(request):
+    active_tab = request.GET.get("tab", "overview").strip().lower()
+    if active_tab not in {"overview", "posts", "comments"}:
+        active_tab = "overview"
+
     user_posts_qs = (
         Post.objects.filter(author=request.user)
         .select_related("subthread", "author")
@@ -406,18 +551,72 @@ def profile_view(request):
     )
     owned_subthreads_qs = Subthread.objects.filter(created_by=request.user).order_by("-created_at")
 
-    recent_posts = [_serialize_post(post) for post in user_posts_qs[:5]]
+    user_posts = list(user_posts_qs)
+    post_vote_map = _user_post_vote_map(request.user, user_posts)
+    profile_overview_url = f"{reverse('main:profile')}?tab=overview"
+    profile_posts_url = f"{reverse('main:profile')}?tab=posts"
+
+    recent_posts = [
+        _serialize_post(
+            post,
+            current_user_vote=post_vote_map.get(post.id, ""),
+            vote_return_url=profile_overview_url,
+        )
+        for post in user_posts[:5]
+    ]
     recent_comments = [_serialize_comment(comment) for comment in user_comments_qs[:5]]
     top_posts = [
-        _serialize_post(post)
+        _serialize_post(
+            post,
+            current_user_vote=post_vote_map.get(post.id, ""),
+            vote_return_url=profile_overview_url,
+        )
         for post in user_posts_qs.order_by("-upvotes", "-created_at")[:3]
     ]
+    all_posts = [
+        _serialize_post(
+            post,
+            current_user_vote=post_vote_map.get(post.id, ""),
+            vote_return_url=profile_posts_url,
+        )
+        for post in user_posts
+    ]
+    all_comments = [_serialize_comment(comment) for comment in user_comments_qs]
+
+    overview_items = sorted(
+        [
+            {
+                "kind": "post",
+                "created_at": post.created_at,
+                "data": _serialize_post(
+                    post,
+                    current_user_vote=post_vote_map.get(post.id, ""),
+                    vote_return_url=profile_overview_url,
+                ),
+            }
+            for post in user_posts
+        ]
+        + [
+            {
+                "kind": "comment",
+                "created_at": comment.created_at,
+                "data": _serialize_comment(comment),
+            }
+            for comment in user_comments_qs
+        ],
+        key=lambda item: item["created_at"],
+        reverse=True,
+    )
 
     context = {
         "profile_user": request.user,
         "recent_posts": recent_posts,
         "recent_comments": recent_comments,
         "top_posts": top_posts,
+        "overview_items": overview_items,
+        "profile_posts": all_posts,
+        "profile_comments": all_comments,
+        "active_tab": active_tab,
         "post_count": user_posts_qs.count(),
         "comment_count": user_comments_qs.count(),
         "subthread_count": owned_subthreads_qs.count(),
@@ -463,6 +662,7 @@ def create_subthread(request):
         defaults={"description": description, "created_by": request.user},
     )
     if created:
+        _ensure_welcome_post(subthread)
         return redirect("main:subthread_detail", name=subthread.name)
 
     context = {
@@ -475,12 +675,25 @@ def create_subthread(request):
 
 def subthread_detail(request, name):
     subthread = get_object_or_404(Subthread, name=name)
+    _ensure_welcome_post(subthread)
     post_qs = Post.objects.filter(subthread=subthread).select_related("author")
-    posts = [_serialize_post(post, return_to_subthread=subthread.name) for post in post_qs]
+    post_list = list(post_qs)
+    vote_map = _user_post_vote_map(request.user, post_list)
+    subthread_url = reverse("main:subthread_detail", kwargs={"name": subthread.name})
+    posts = [
+        _serialize_post(
+            post,
+            return_to_subthread=subthread.name,
+            current_user_vote=vote_map.get(post.id, ""),
+            vote_return_url=subthread_url,
+        )
+        for post in post_list
+    ]
 
     context = {
         "subthread": subthread,
         "posts": posts,
+        "search_scope_name": subthread.name,
         **_sidebar_context(request),
     }
     return render(request, "subthread_detail.html", context)

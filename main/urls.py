@@ -6,6 +6,7 @@ app_name = "main"
 urlpatterns = [
     path('', views.index, name='index'),
     path('trending/', views.trending, name='trending'),
+    path('search/', views.search, name='search'),
     path('d/<path:name>/<int:post_id>/', views.post_detail, name='post_detail'),
     path('d/<path:name>/<int:post_id>/comment/', views.post_comment, name='post_comment'),
     path('vote/post/<int:post_id>/', views.vote, name='vote_post'),
