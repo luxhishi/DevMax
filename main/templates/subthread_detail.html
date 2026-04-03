@@ -7,7 +7,7 @@
       {% include "components/sidebar.html" %}
     </aside>
 
-    <main class="min-w-0 space-y-4">
+    <div class="min-w-0 space-y-4">
       <a href="{% url 'main:index' %}" class="inline-block text-sm text-purple-600 hover:underline">&larr; Back to feed</a>
 
       <section class="landing-panel p-6 sm:p-8">
@@ -35,7 +35,7 @@
           <p class="mt-2 text-sm">Be the first to post.</p>
         </div>
       {% endif %}
-    </main>
+    </div>
 
     <aside class="space-y-4 rail-layer">
       {% if user.is_authenticated %}

@@ -7,18 +7,57 @@ from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import Comment, Post, Subthread, UserPreference, Vote
 
 
-def _build_post_detail_url(post_id, return_to_subthread=None, anchor=None):
-    url = reverse("main:post_detail", kwargs={"post_id": post_id})
+def _build_post_detail_url(post_id, subthread_name, return_to_subthread=None, anchor=None):
+    url = reverse("main:post_detail", kwargs={"name": subthread_name, "post_id": post_id})
     if return_to_subthread:
         url = f"{url}?{urlencode({'from_subthread': return_to_subthread})}"
     if anchor:
         url = f"{url}#{anchor}"
     return url
+
+
+def _time_ago(value):
+    local_value = timezone.localtime(value)
+    now = timezone.localtime(timezone.now())
+    delta = now - local_value
+
+    if delta.total_seconds() < 60:
+        return "just now"
+
+    minutes = int(delta.total_seconds() // 60)
+    if minutes < 60:
+        unit = "minute" if minutes == 1 else "minutes"
+        return f"{minutes} {unit} ago"
+
+    hours = int(delta.total_seconds() // 3600)
+    if hours < 24:
+        unit = "hour" if hours == 1 else "hours"
+        return f"{hours} {unit} ago"
+
+    days = delta.days
+    if days < 7:
+        unit = "day" if days == 1 else "days"
+        return f"{days} {unit} ago"
+
+    weeks = days // 7
+    if weeks < 5:
+        unit = "week" if weeks == 1 else "weeks"
+        return f"{weeks} {unit} ago"
+
+    months = days // 30
+    if months < 12:
+        unit = "month" if months == 1 else "months"
+        return f"{months} {unit} ago"
+
+    years = days // 365
+    unit = "year" if years == 1 else "years"
+    return f"{years} {unit} ago"
 
 
 def _related_tags(subthread_name, title, content):
@@ -52,12 +91,24 @@ def _serialize_post(post, return_to_subthread=None):
         "subthread": post.subthread.name,
         "upvotes": post.upvotes,
         "comments": post.comments.count(),
-        "timeAgo": post.created_at.strftime("%H hours ago"),
+        "timeAgo": _time_ago(post.created_at),
         "content": post.content,
         "tags": _related_tags(post.subthread.name, post.title, post.content),
         "author": post.author.username,
-        "detail_url": _build_post_detail_url(post.id, return_to_subthread=return_to_subthread),
-        "comments_url": _build_post_detail_url(post.id, return_to_subthread=return_to_subthread, anchor="comments"),
+        "detail_url": _build_post_detail_url(post.id, post.subthread.name, return_to_subthread=return_to_subthread),
+        "comments_url": _build_post_detail_url(post.id, post.subthread.name, return_to_subthread=return_to_subthread, anchor="comments"),
+    }
+
+
+def _serialize_comment(comment):
+    return {
+        "id": comment.id,
+        "content": comment.content,
+        "post_id": comment.post.id,
+        "post_title": comment.post.title,
+        "subthread": comment.post.subthread.name,
+        "timeAgo": _time_ago(comment.created_at),
+        "detail_url": _build_post_detail_url(comment.post.id, comment.post.subthread.name, anchor="comments"),
     }
 
 
@@ -73,8 +124,8 @@ def _fake_posts():
             "content": "I'm working on a large React app...",
             "tags": _related_tags("react", "How to optimize React performance?", "I'm working on a large React app..."),
             "author": "user1",
-            "detail_url": _build_post_detail_url(1),
-            "comments_url": _build_post_detail_url(1, anchor="comments"),
+            "detail_url": _build_post_detail_url(1, "react"),
+            "comments_url": _build_post_detail_url(1, "react", anchor="comments"),
         },
         {
             "id": 2,
@@ -86,8 +137,8 @@ def _fake_posts():
             "content": "Generics can be confusing...",
             "tags": _related_tags("typescript", "Understanding TypeScript Generics", "Generics can be confusing..."),
             "author": "user2",
-            "detail_url": _build_post_detail_url(2),
-            "comments_url": _build_post_detail_url(2, anchor="comments"),
+            "detail_url": _build_post_detail_url(2, "typescript"),
+            "comments_url": _build_post_detail_url(2, "typescript", anchor="comments"),
         },
     ]
 
@@ -110,7 +161,8 @@ def _sidebar_context(request):
 
 
 def _post_detail_redirect(post_id, return_to_subthread=None):
-    return redirect(_build_post_detail_url(post_id, return_to_subthread=return_to_subthread))
+    post = get_object_or_404(Post.objects.select_related("subthread"), id=post_id)
+    return redirect(_build_post_detail_url(post_id, post.subthread.name, return_to_subthread=return_to_subthread))
 
 
 def _vote_queryset(target):
@@ -141,7 +193,7 @@ def trending(request):
     return redirect("main:index")
 
 
-def post_detail(request, post_id):
+def post_detail(request, name, post_id):
     return_to_subthread = request.GET.get("from_subthread", "").strip()
     if return_to_subthread and Subthread.objects.filter(name=return_to_subthread).exists():
         back_url = reverse("main:subthread_detail", kwargs={"name": return_to_subthread})
@@ -151,6 +203,8 @@ def post_detail(request, post_id):
 
     try:
         post = Post.objects.select_related("subthread", "author").get(id=post_id)
+        if post.subthread.name != name:
+            return redirect(_build_post_detail_url(post.id, post.subthread.name, return_to_subthread=return_to_subthread))
         current_user_vote = ""
         if request.user.is_authenticated:
             current_user_vote = (
@@ -180,17 +234,20 @@ def post_detail(request, post_id):
 
         for comment in comments:
             comment.current_user_vote = comment_vote_map.get(comment.id, "")
+            comment.time_ago = _time_ago(comment.created_at)
             for reply in comment.replies.all():
                 reply.current_user_vote = comment_vote_map.get(reply.id, "")
+                reply.time_ago = _time_ago(reply.created_at)
 
         post_data = {
             "id": post.id,
             "title": post.title,
             "subthread": post.subthread.name,
+            "author": post.author.username,
             "upvotes": post.upvotes,
             "downvotes": post.downvotes,
             "comments": len(comments) + sum(comment.replies.count() for comment in comments),
-            "timeAgo": post.created_at.strftime("%H hours ago"),
+            "timeAgo": _time_ago(post.created_at),
             "content": post.content,
             "tags": _related_tags(post.subthread.name, post.title, post.content),
         }
@@ -211,6 +268,7 @@ def post_detail(request, post_id):
                 "id": 1,
                 "title": "How to optimize React performance?",
                 "subthread": "react",
+                "author": "user1",
                 "timeAgo": "2 hours ago",
                 "content": "Full post content here...",
                 "tags": ["react", "performance"],
@@ -222,6 +280,7 @@ def post_detail(request, post_id):
                 "id": 2,
                 "title": "Understanding TypeScript Generics",
                 "subthread": "typescript",
+                "author": "user2",
                 "timeAgo": "4 hours ago",
                 "content": "Full post content here...",
                 "tags": ["typescript"],
@@ -250,7 +309,7 @@ def post_detail(request, post_id):
 
 @login_required
 @require_POST
-def post_comment(request, post_id):
+def post_comment(request, name, post_id):
     post = get_object_or_404(Post, id=post_id)
     content = request.POST.get("content")
     parent_id = request.POST.get("parent_id")
@@ -335,7 +394,37 @@ def signup_view(request):
 
 @login_required
 def profile_view(request):
-    return render(request, "profile.html")
+    user_posts_qs = (
+        Post.objects.filter(author=request.user)
+        .select_related("subthread", "author")
+        .order_by("-created_at")
+    )
+    user_comments_qs = (
+        Comment.objects.filter(author=request.user)
+        .select_related("post", "post__subthread")
+        .order_by("-created_at")
+    )
+    owned_subthreads_qs = Subthread.objects.filter(created_by=request.user).order_by("-created_at")
+
+    recent_posts = [_serialize_post(post) for post in user_posts_qs[:5]]
+    recent_comments = [_serialize_comment(comment) for comment in user_comments_qs[:5]]
+    top_posts = [
+        _serialize_post(post)
+        for post in user_posts_qs.order_by("-upvotes", "-created_at")[:3]
+    ]
+
+    context = {
+        "profile_user": request.user,
+        "recent_posts": recent_posts,
+        "recent_comments": recent_comments,
+        "top_posts": top_posts,
+        "post_count": user_posts_qs.count(),
+        "comment_count": user_comments_qs.count(),
+        "subthread_count": owned_subthreads_qs.count(),
+        "owned_subthreads": list(owned_subthreads_qs.values("name", "description", "members")[:4]),
+        **_sidebar_context(request),
+    }
+    return render(request, "profile.html", context)
 
 
 @login_required

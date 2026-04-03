@@ -18,6 +18,7 @@ class RoutingTests(TestCase):
         self.assertEqual(reverse("main:profile"), "/main/profile/")
         self.assertEqual(reverse("main:subthread_detail", args=["python"]), "/main/d/python/")
         self.assertEqual(reverse("main:create_post", args=["python"]), "/main/d/python/create-post/")
+        self.assertEqual(reverse("main:post_detail", kwargs={"name": "python", "post_id": 42}), "/main/d/python/42/")
 
     def test_main_index_route_resolves(self):
         self.assertEqual(resolve("/main/").view_name, "main:index")
@@ -74,14 +75,16 @@ class RoutingTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         welcome_post = Post.objects.get(subthread=subthread, title=f"Welcome to d/{subthread.name}!")
-        self.assertContains(response, reverse("main:post_detail", args=[welcome_post.id]))
+        self.assertContains(response, reverse("main:post_detail", kwargs={"name": subthread.name, "post_id": welcome_post.id}))
 
     def test_post_detail_back_link_uses_subthread_context(self):
         user = User.objects.create_user(username="erin", password="testpass123")
         subthread = Subthread.objects.create(name="webdev", description="Webdev", created_by=user)
         post = Post.objects.create(title="Best Tailwind Plugins?", content="Content", subthread=subthread, author=user)
 
-        response = self.client.get(f"{reverse('main:post_detail', args=[post.id])}?from_subthread={subthread.name}")
+        response = self.client.get(
+            f"{reverse('main:post_detail', kwargs={'name': subthread.name, 'post_id': post.id})}?from_subthread={subthread.name}"
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'href="{reverse("main:subthread_detail", args=[subthread.name])}"')
@@ -94,7 +97,10 @@ class RoutingTests(TestCase):
         response = self.client.get(reverse("main:subthread_detail", args=[subthread.name]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, f"{reverse('main:post_detail', args=[post.id])}?from_subthread={subthread.name}")
+        self.assertContains(
+            response,
+            f"{reverse('main:post_detail', kwargs={'name': subthread.name, 'post_id': post.id})}?from_subthread={subthread.name}",
+        )
 
     def test_feed_posts_include_related_dummy_tags(self):
         user = User.objects.create_user(username="gina", password="testpass123")
@@ -126,12 +132,12 @@ class RoutingTests(TestCase):
         post = Post.objects.create(title="A post", content="Content", subthread=subthread, author=user)
 
         self.client.force_login(user)
-        neutral_response = self.client.get(reverse("main:post_detail", args=[post.id]))
+        neutral_response = self.client.get(reverse("main:post_detail", kwargs={"name": subthread.name, "post_id": post.id}))
 
         self.assertContains(neutral_response, "vote-neutral")
 
         Vote.objects.create(user=user, post=post, vote_type="up")
-        voted_response = self.client.get(reverse("main:post_detail", args=[post.id]))
+        voted_response = self.client.get(reverse("main:post_detail", kwargs={"name": subthread.name, "post_id": post.id}))
 
         self.assertContains(voted_response, "vote-up-active")
 
@@ -142,7 +148,7 @@ class RoutingTests(TestCase):
         Vote.objects.create(user=user, post=post, vote_type="down")
 
         self.client.force_login(user)
-        response = self.client.get(reverse("main:post_detail", args=[post.id]))
+        response = self.client.get(reverse("main:post_detail", kwargs={"name": subthread.name, "post_id": post.id}))
 
         self.assertContains(response, "vote-down-active")
 
