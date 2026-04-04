@@ -47,7 +47,9 @@
 
   <div class="comment-main">
     <div class="comment-meta">
-      <span class="comment-author">{{ comment.author.username }}</span>
+      <a href="{% url 'main:user_profile' comment.author.username %}" class="comment-author hover:underline">
+        {{ comment.author.username }}
+      </a>
       <span>&bull;</span>
       <span>{{ comment.time_ago }}</span>
     </div>
@@ -67,6 +69,27 @@
         >
           Reply
         </button>
+        {% if comment.can_boost_votes %}
+        <form method="post" action="{% url 'main:adjust_comment_votes' comment.id %}" class="comment-inline-form">
+          {% csrf_token %}
+          <input type="hidden" name="vote_type" value="up">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="comment-admin-action">+1 Upvote</button>
+        </form>
+        <form method="post" action="{% url 'main:adjust_comment_votes' comment.id %}" class="comment-inline-form">
+          {% csrf_token %}
+          <input type="hidden" name="vote_type" value="down">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="comment-admin-action comment-admin-action-danger">+1 Downvote</button>
+        </form>
+        {% endif %}
+        {% if comment.can_manage %}
+        <form method="post" action="{% url 'main:delete_comment' comment.id %}" class="comment-inline-form" onsubmit="return window.confirm('Delete this comment?');">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="comment-admin-action comment-admin-action-danger">Delete</button>
+        </form>
+        {% endif %}
       </div>
 
       <form

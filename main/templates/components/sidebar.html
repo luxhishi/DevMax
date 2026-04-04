@@ -1,11 +1,20 @@
+{% with active_nav=current_nav|default:"home" %}
 <div class="space-y-4">
   <div class="bg-white p-3 rounded-lg space-y-1">
-    <a href="{% url 'main:index' %}" class="block px-3 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+    <a href="{% url 'main:index' %}" class="block px-3 py-2 rounded text-sm {% if active_nav == 'home' %}bg-purple-600 text-white hover:bg-purple-700{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
       Home
     </a>
-    <a href="{% url 'main:trending' %}" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
+    <a href="{% url 'main:trending' %}" class="block px-3 py-2 rounded text-sm {% if active_nav == 'trending' %}bg-purple-600 text-white hover:bg-purple-700{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
       Trending
     </a>
+    <a href="{% url 'main:questions' %}" class="block px-3 py-2 rounded text-sm {% if active_nav == 'questions' %}bg-purple-600 text-white hover:bg-purple-700{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+      Questions
+    </a>
+    {% if user.is_superuser %}
+    <a href="{% url 'main:superuser_dashboard' %}" class="block px-3 py-2 rounded text-sm {% if active_nav == 'superuser_dashboard' %}bg-purple-600 text-white hover:bg-purple-700{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+      Moderation
+    </a>
+    {% endif %}
   </div>
 
   <div class="bg-white p-3 rounded-lg space-y-1">
@@ -19,3 +28,4 @@
     {% endfor %}
   </div>
 </div>
+{% endwith %}

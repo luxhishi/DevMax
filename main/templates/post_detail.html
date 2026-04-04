@@ -60,7 +60,10 @@
           <div class="feed-meta">
             <span class="font-semibold text-purple-600">d/{{ post.subthread }}</span>
             <span>&bull;</span>
-            <span>Posted by u/{{ post.author }}</span>
+            <span>Posted by</span>
+            <a href="{% url 'main:user_profile' post.author %}" class="font-medium hover:underline">
+              u/{{ post.author }}
+            </a>
             <span>&bull;</span>
             <span>{{ post.timeAgo }}</span>
           </div>
@@ -70,8 +73,8 @@
 
           <div class="feed-tags">
             {% for tag in post.tags %}
-            <span class="feed-tag">{{ tag }}</span>
-      {% endfor %}
+              <a href="{{ tag.url }}" class="feed-tag feed-tag-link">{{ tag.name }}</a>
+            {% endfor %}
           </div>
 
           <div class="feed-actions">
@@ -96,7 +99,38 @@
               </svg>
               <span class="action-chip-text">Share</span>
             </button>
+            {% if can_manage_post %}
+            <button type="button" id="open-delete-modal" class="action-chip action-chip-danger" aria-label="Delete post">
+              <svg class="feed-action-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-8 0 1 12a1 1 0 001 1h6a1 1 0 001-1l1-12"/>
+              </svg>
+              <span class="action-chip-text">Delete</span>
+            </button>
+            {% endif %}
           </div>
+
+          {% if can_boost_votes %}
+          <div class="superuser-panel">
+            <div class="superuser-panel-head">
+              <span class="superuser-panel-kicker">Superuser Controls</span>
+              <span class="superuser-panel-note">Manual vote boost</span>
+            </div>
+            <div class="superuser-button-row">
+              <form method="post" action="{% url 'main:adjust_post_votes' post.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="vote_type" value="up">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="superuser-button">+1 Upvote</button>
+              </form>
+              <form method="post" action="{% url 'main:adjust_post_votes' post.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="vote_type" value="down">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="superuser-button superuser-button-danger">+1 Downvote</button>
+              </form>
+            </div>
+          </div>
+          {% endif %}
         </div>
       </div>
     </article>
@@ -160,6 +194,45 @@
 </div>
 {% endif %}
 
+{% if can_manage_post %}
+<div id="delete-post-modal" class="modal-overlay" aria-hidden="true">
+  <div class="modal-card modal-shell">
+    <div class="modal-header">
+      <div class="modal-copy">
+        <p class="modal-kicker">Delete Post</p>
+        <h3 class="modal-title">Delete this post?</h3>
+        <p class="modal-note">This will permanently remove the post and its discussion from DevMax.</p>
+      </div>
+      <button
+        type="button"
+        id="close-delete-modal"
+        class="modal-close"
+        aria-label="Close delete post modal"
+      >
+        &times;
+      </button>
+    </div>
+
+    <form method="post" action="{% url 'main:delete_post' post.subthread post.id %}" class="modal-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ back_url }}">
+      {% if return_to_subthread %}
+      <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+      {% endif %}
+      <div class="modal-field-group">
+        <p class="modal-delete-copy">
+          <strong>{{ post.title }}</strong> will be deleted, along with its comments and replies.
+        </p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancel-delete-modal" class="modal-button modal-button-secondary">Cancel</button>
+        <button type="submit" class="modal-button modal-button-danger">Delete Post</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
 <script>
   (function() {
     const commentsSection = document.getElementById('comments');
@@ -167,29 +240,39 @@
     const openCommentModalButtons = document.querySelectorAll('[data-open-comment-modal], #open-comment-modal');
     const closeCommentModal = document.getElementById('close-comment-modal');
     const cancelCommentModal = document.getElementById('cancel-comment-modal');
+    const deleteModal = document.getElementById('delete-post-modal');
+    const openDeleteModal = document.getElementById('open-delete-modal');
+    const closeDeleteModal = document.getElementById('close-delete-modal');
+    const cancelDeleteModal = document.getElementById('cancel-delete-modal');
     const openCommentOnLoad = {% if open_comment_modal %}true{% else %}false{% endif %};
-    if (!commentsSection) {
-      return;
-    }
-
-    const hideCommentModal = function() {
-      if (!commentModal) {
+    const closeModal = function(modal) {
+      if (!modal) {
         return;
       }
-      commentModal.classList.remove('is-open');
-      commentModal.setAttribute('aria-hidden', 'true');
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    };
+
+    const openModal = function(modal, focusSelector) {
+      if (!modal) {
+        return;
+      }
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      if (focusSelector) {
+        const field = modal.querySelector(focusSelector);
+        if (field) {
+          field.focus();
+        }
+      }
+    };
+
+    const hideCommentModal = function() {
+      closeModal(commentModal);
     };
 
     const showCommentModal = function() {
-      if (!commentModal) {
-        return;
-      }
-      commentModal.classList.add('is-open');
-      commentModal.setAttribute('aria-hidden', 'false');
-      const field = commentModal.querySelector('#comment-content');
-      if (field) {
-        field.focus();
-      }
+      openModal(commentModal, '#comment-content');
     };
 
     openCommentModalButtons.forEach(function(button) {
@@ -212,56 +295,87 @@
       });
     }
 
+    if (openDeleteModal) {
+      openDeleteModal.addEventListener('click', function() {
+        openModal(deleteModal);
+      });
+    }
+
+    if (closeDeleteModal) {
+      closeDeleteModal.addEventListener('click', function() {
+        closeModal(deleteModal);
+      });
+    }
+
+    if (cancelDeleteModal) {
+      cancelDeleteModal.addEventListener('click', function() {
+        closeModal(deleteModal);
+      });
+    }
+
+    if (deleteModal) {
+      deleteModal.addEventListener('click', function(event) {
+        if (event.target === deleteModal) {
+          closeModal(deleteModal);
+        }
+      });
+    }
+
     if (openCommentOnLoad) {
       showCommentModal();
     }
 
-    commentsSection.addEventListener('click', function(event) {
-      const replyToggle = event.target.closest('[data-reply-toggle]');
-      if (replyToggle) {
-        const targetId = replyToggle.getAttribute('data-target');
-        const replyForm = targetId ? document.getElementById(targetId) : null;
-        if (!replyForm) {
+    if (commentsSection) {
+      commentsSection.addEventListener('click', function(event) {
+        const replyToggle = event.target.closest('[data-reply-toggle]');
+        if (replyToggle) {
+          const targetId = replyToggle.getAttribute('data-target');
+          const replyForm = targetId ? document.getElementById(targetId) : null;
+          if (!replyForm) {
+            return;
+          }
+
+          const willOpen = replyForm.hidden;
+          replyForm.hidden = !willOpen;
+          replyToggle.setAttribute('aria-expanded', String(willOpen));
+
+          if (willOpen) {
+            const replyField = replyForm.querySelector('textarea');
+            if (replyField) {
+              replyField.focus();
+            }
+          }
           return;
         }
 
-        const willOpen = replyForm.hidden;
-        replyForm.hidden = !willOpen;
-        replyToggle.setAttribute('aria-expanded', String(willOpen));
-
-        if (willOpen) {
-          const replyField = replyForm.querySelector('textarea');
-          if (replyField) {
-            replyField.focus();
-          }
+        const threadToggle = event.target.closest('[data-thread-toggle]');
+        if (!threadToggle) {
+          return;
         }
-        return;
-      }
 
-      const threadToggle = event.target.closest('[data-thread-toggle]');
-      if (!threadToggle) {
-        return;
-      }
+        const threadBodyId = threadToggle.getAttribute('aria-controls');
+        const commentThread = threadToggle.closest('[data-comment-thread]');
+        const threadBody = threadBodyId ? document.getElementById(threadBodyId) : null;
+        const symbol = threadToggle.querySelector('[data-thread-symbol]');
+        if (!commentThread || !threadBody || !symbol) {
+          return;
+        }
 
-      const threadBodyId = threadToggle.getAttribute('aria-controls');
-      const commentThread = threadToggle.closest('[data-comment-thread]');
-      const threadBody = threadBodyId ? document.getElementById(threadBodyId) : null;
-      const symbol = threadToggle.querySelector('[data-thread-symbol]');
-      if (!commentThread || !threadBody || !symbol) {
-        return;
-      }
-
-      const willCollapse = !commentThread.classList.contains('is-collapsed');
-      commentThread.classList.toggle('is-collapsed', willCollapse);
-      threadBody.hidden = willCollapse;
-      threadToggle.setAttribute('aria-expanded', String(!willCollapse));
-      threadToggle.setAttribute('aria-label', willCollapse ? 'Expand conversation' : 'Collapse conversation');
-      symbol.textContent = willCollapse ? '+' : '-';
-    });
+        const willCollapse = !commentThread.classList.contains('is-collapsed');
+        commentThread.classList.toggle('is-collapsed', willCollapse);
+        threadBody.hidden = willCollapse;
+        threadToggle.setAttribute('aria-expanded', String(!willCollapse));
+        threadToggle.setAttribute('aria-label', willCollapse ? 'Expand conversation' : 'Collapse conversation');
+        symbol.textContent = willCollapse ? '+' : '-';
+      });
+    }
 
     document.addEventListener('keydown', function(event) {
       if (event.key === 'Escape' && commentModal && commentModal.classList.contains('is-open')) {
         hideCommentModal();
+      }
+      if (event.key === 'Escape' && deleteModal && deleteModal.classList.contains('is-open')) {
+        closeModal(deleteModal);
       }
     });
   })();

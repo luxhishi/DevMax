@@ -15,17 +15,21 @@
         {% include "components/post_card.html" %}
       {% endfor %}
     {% else %}
-      <div class="text-center text-gray-500 p-8 text-lg">No posts yet.</div>
+      <div class="text-center text-gray-500 p-8">
+        <p class="text-lg">{{ feed_empty_title }}</p>
+        {% if feed_empty_hint %}
+          <p class="mt-2 text-sm">{{ feed_empty_hint }}</p>
+        {% endif %}
+      </div>
     {% endif %}
   </main>
 
   <aside class="col-span-3 self-start">
     <div class="rail-layer space-y-4">
       {% if user.is_authenticated %}
-      <div class="bg-white p-4 rounded-lg shadow border">
-        <h3 class="font-semibold mb-2">Create New Subthread</h3>
-        <button id="create-subthread-btn" type="button" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 font-medium">+ New Subthread</button>
-      </div>
+      <button id="create-subthread-btn" type="button" class="launch-cta-button w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 font-medium shadow">
+        + New Subthread
+      </button>
       {% endif %}
 
       <div>

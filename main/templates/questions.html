@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 grid grid-cols-12 gap-6">
+
+  <aside class="col-span-2 self-start">
+    <div class="rail-layer">
+      {% include "components/sidebar.html" %}
+    </div>
+  </aside>
+
+  <main class="col-span-7 space-y-4">
+    <section class="landing-panel p-6 sm:p-7">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-widest text-gray-500">Questions</p>
+          <h1 class="mt-3 text-3xl font-bold text-gray-900">
+            {% if active_question_sort == 'unanswered' %}
+              Unanswered Questions
+            {% elif active_question_sort == 'upvoted' %}
+              Most Upvoted Questions
+            {% elif active_question_sort == 'discussed' %}
+              Most Discussed Questions
+            {% else %}
+              Newest Questions
+            {% endif %}
+          </h1>
+          <p class="mt-3 text-sm text-gray-500">
+            Browse question-style posts across DevMax and jump into the conversations that need answers.
+          </p>
+        </div>
+        <div class="question-hero-actions sm:justify-end">
+          <div class="soft-chip rounded-full px-4 py-2 text-sm font-semibold">
+            {{ question_total }} question{{ question_total|pluralize }}
+          </div>
+          {% if user.is_authenticated %}
+            <button
+              id="ask-question-btn"
+              type="button"
+              class="launch-cta-button question-hero-button bg-purple-600 text-white hover:bg-purple-700 shadow"
+              {% if not available_subthreads %}disabled{% endif %}
+            >
+              Ask Question
+            </button>
+          {% else %}
+            <a href="{% url 'main:login' %}" class="launch-cta-button question-hero-button bg-purple-600 text-white hover:bg-purple-700 shadow">
+              Log in to Ask
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-panel p-4 sm:p-5">
+      <div class="search-tab-row">
+        {% for tab in question_sort_tabs %}
+          <a href="{{ tab.url }}" class="search-tab{% if tab.active %} search-tab-active{% endif %}">
+            <span>{{ tab.label }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if questions %}
+      <div class="question-results">
+        {% for question in questions %}
+          <div
+            class="question-row cursor-pointer"
+            role="link"
+            tabindex="0"
+            onclick="window.location.href='{{ question.detail_url }}'"
+            onkeydown="if (event.key === 'Enter') window.location.href='{{ question.detail_url }}'"
+          >
+            <div class="question-stats">
+              <div class="question-stat">
+                <span class="question-stat-value">{{ question.upvotes }}</span>
+                <span class="question-stat-label">votes</span>
+              </div>
+              <div class="question-stat{% if question.comments %} question-stat-emphasis{% endif %}">
+                <span class="question-stat-value">{{ question.comments }}</span>
+                <span class="question-stat-label">comments</span>
+              </div>
+            </div>
+
+            <div class="question-main">
+              <div class="question-title-row">
+                <h2 class="question-title">{{ question.title }}</h2>
+              </div>
+
+              <p class="question-excerpt">{{ question.content|truncatechars:220 }}</p>
+
+              <div class="feed-tags">
+                {% for tag in question.tags %}
+                  <a
+                    href="{{ tag.url }}"
+                    class="feed-tag feed-tag-link"
+                    onclick="event.stopPropagation()"
+                    onkeydown="event.stopPropagation()"
+                  >
+                    {{ tag.name }}
+                  </a>
+                {% endfor %}
+              </div>
+
+              <div class="question-meta">
+                <span class="font-semibold text-purple-600">d/{{ question.subthread }}</span>
+                <span>&bull;</span>
+                <span>asked by</span>
+                <span class="font-medium">u/{{ question.author }}</span>
+                <span>&bull;</span>
+                <span>{{ question.timeAgo }}</span>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="landing-panel search-empty-panel search-empty-panel-center">
+        No questions match this view yet.
+      </div>
+    {% endif %}
+  </main>
+
+  <aside class="col-span-3 self-start">
+    <div class="rail-layer space-y-4">
+      {% if user.is_authenticated %}
+      <button id="create-subthread-btn" type="button" class="launch-cta-button w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 font-medium shadow">
+        + New Subthread
+      </button>
+      {% endif %}
+
+      <div>
+        <h3 class="font-semibold mb-3">Suggested Subthreads</h3>
+        {% if suggested_subthreads %}
+          <div class="space-y-3">
+            {% for sub in suggested_subthreads %}
+              {% include "components/subthread_card.html" with sub=sub %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-gray-500">No suggestions yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </aside>
+
+  {% if user.is_authenticated %}
+  <div id="ask-question-modal" class="modal-overlay modal-overlay-tall" aria-hidden="true">
+    <div class="modal-card modal-shell modal-card-tall">
+      <div class="modal-header">
+        <div class="modal-copy">
+          <p class="modal-kicker">Ask Question</p>
+          <h3 class="modal-title">Start a new question</h3>
+          <p class="modal-note">Choose the right subthread, write a clear title, and explain what you need help with.</p>
+        </div>
+        <button
+          type="button"
+          id="close-question-x"
+          class="modal-close"
+          aria-label="Close ask question modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      <form method="post" action="{% url 'main:ask_question' %}" class="modal-form">
+        {% csrf_token %}
+        <div class="modal-field-group">
+          <label for="question-subthread" class="modal-label">Subthread</label>
+          <select id="question-subthread" name="subthread_id" class="modal-field" required>
+            <option value="" selected disabled>Select a subthread</option>
+            {% for sub in available_subthreads %}
+              <option value="{{ sub.id }}">d/{{ sub.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="modal-field-group">
+          <label for="question-title" class="modal-label">Question title</label>
+          <input id="question-title" type="text" name="title" placeholder="e.g. How do I structure Django forms for this flow?" class="modal-field" required>
+        </div>
+        <div class="modal-field-group">
+          <label for="question-content" class="modal-label">Details</label>
+          {% include "components/code_toolbar.html" with target_id="question-content" %}
+          <textarea id="question-content" name="content" placeholder="Describe the problem, what you tried, and what result you expected." class="modal-field modal-field-tall resize-y" rows="7" required></textarea>
+        </div>
+        <div class="modal-field-group">
+          <label for="question-tags" class="modal-label">Tags</label>
+          <input id="question-tags" type="text" name="tags" placeholder="e.g. django, orm, testing" class="modal-field">
+          <p class="modal-hint">Use commas to separate up to five tags.</p>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-question" class="modal-button modal-button-secondary">Cancel</button>
+          <button type="submit" class="modal-button modal-button-primary">Post Question</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="create-subthread-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card modal-shell">
+      <div class="modal-header">
+        <div class="modal-copy">
+          <p class="modal-kicker">New Community</p>
+          <h3 class="modal-title">Create a subthread</h3>
+          <p class="modal-note">Give your community a clear name and a short description so people know what belongs there.</p>
+        </div>
+        <button
+          type="button"
+          id="close-subthread-x"
+          class="modal-close"
+          aria-label="Close create subthread modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      <form method="post" action="{% url 'main:create_subthread' %}" class="modal-form">
+        {% csrf_token %}
+        <div class="modal-field-group">
+          <label for="subthread-name" class="modal-label">Name</label>
+          <input id="subthread-name" type="text" name="name" placeholder="e.g. python" class="modal-field" required maxlength="100">
+        </div>
+        <div class="modal-field-group">
+          <label for="subthread-description" class="modal-label">Description</label>
+          <textarea id="subthread-description" name="description" placeholder="What is this subthread about?" class="modal-field modal-field-tall resize-y" rows="5"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-subthread" class="modal-button modal-button-secondary">Cancel</button>
+          <button type="submit" class="modal-button modal-button-primary">Create Subthread</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const setupModal = ({ modalId, openId, cancelId, closeId }) => {
+    const modal = document.getElementById(modalId);
+    const openButton = document.getElementById(openId);
+    const cancelButton = document.getElementById(cancelId);
+    const closeButton = document.getElementById(closeId);
+
+    if (!modal || !openButton || !cancelButton) return;
+
+    const closeModal = () => {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    };
+
+    openButton.addEventListener('click', () => {
+      if (openButton.disabled) return;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+    });
+
+    cancelButton.addEventListener('click', closeModal);
+
+    if (closeButton) {
+      closeButton.addEventListener('click', closeModal);
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+        closeModal();
+      }
+    });
+  };
+
+  setupModal({
+    modalId: 'ask-question-modal',
+    openId: 'ask-question-btn',
+    cancelId: 'cancel-question',
+    closeId: 'close-question-x',
+  });
+
+  setupModal({
+    modalId: 'create-subthread-modal',
+    openId: 'create-subthread-btn',
+    cancelId: 'cancel-subthread',
+    closeId: 'close-subthread-x',
+  });
+});
+</script>
+{% endblock %}

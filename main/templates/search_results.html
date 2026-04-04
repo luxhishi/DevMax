@@ -31,15 +31,55 @@
           {% if search_scope_name %}
             {{ post_total }} post{{ post_total|pluralize }} found in d/{{ search_scope_name }}.
           {% else %}
-            {{ subthread_total }} subthread{{ subthread_total|pluralize }} and {{ post_total }} post{{ post_total|pluralize }} matched your search.
+            {{ profile_total }} profile{{ profile_total|pluralize }}, {{ subthread_total }} subthread{{ subthread_total|pluralize }}, and {{ post_total }} post{{ post_total|pluralize }} matched your search.
           {% endif %}
         {% else %}
-          Try a post title, body text, or a subthread name from the header search bar.
+          Try a username, tag, post title, body text, or a subthread name from the header search bar.
         {% endif %}
       </p>
     </section>
 
-    {% if query and not search_scope_name %}
+    {% if search_tabs %}
+      <section class="landing-panel p-4 sm:p-5">
+        <div class="search-tab-row">
+          {% for tab in search_tabs %}
+            <a href="{{ tab.url }}" class="search-tab{% if tab.active %} search-tab-active{% endif %}">
+              <span>{{ tab.label }}</span>
+              <span class="search-tab-count">{{ tab.count }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if show_profile_results %}
+      <section class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <h2 class="text-lg font-semibold text-gray-900">Profiles</h2>
+          <span class="text-sm text-gray-500">{{ profile_total }}</span>
+        </div>
+
+        {% if profile_results %}
+          <div class="search-profile-grid">
+            {% for profile in profile_results %}
+              <a href="{% url 'main:user_profile' profile.username %}" class="search-profile-card">
+                <span class="search-profile-avatar">{{ profile.username|first|upper }}</span>
+                <span class="search-profile-copy">
+                  <span class="search-profile-name">u/{{ profile.username }}</span>
+                  <span class="search-profile-meta">Joined {{ profile.date_joined|date:"M Y" }}</span>
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="landing-panel search-empty-panel">
+            No profiles matched your search yet.
+          </div>
+        {% endif %}
+      </section>
+    {% endif %}
+
+    {% if show_subthread_results %}
       <section class="space-y-3">
         <div class="flex items-center justify-between px-1">
           <h2 class="text-lg font-semibold text-gray-900">Subthreads</h2>
@@ -60,6 +100,7 @@
       </section>
     {% endif %}
 
+    {% if show_post_results %}
     <section class="space-y-3">
       <div class="flex items-center justify-between px-1">
         <h2 class="text-lg font-semibold text-gray-900">Posts</h2>
@@ -82,10 +123,11 @@
         </div>
       {% else %}
         <div class="landing-panel search-empty-panel search-empty-panel-center">
-          Search for a subthread or post to get started.
+          Search for a profile, subthread, or post to get started.
         </div>
       {% endif %}
     </section>
+    {% endif %}
   </main>
 
   <aside class="col-span-3 self-start">
@@ -93,7 +135,7 @@
       {% if user.is_authenticated %}
       <div class="bg-white p-4 rounded-lg shadow border">
         <h3 class="font-semibold mb-2">Create New Subthread</h3>
-        <button id="create-subthread-btn" type="button" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 font-medium">+ New Subthread</button>
+        <button id="create-subthread-btn" type="button" class="launch-cta-button w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 font-medium">+ New Subthread</button>
       </div>
       {% endif %}
 

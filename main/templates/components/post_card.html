@@ -76,7 +76,15 @@
       <div class="feed-meta">
         <span class="font-semibold text-purple-600">d/{{ post.subthread }}</span>
         <span>&bull;</span>
-        <span>Posted by u/{{ post.author }}</span>
+        <span>Posted by</span>
+        <a
+          href="{% url 'main:user_profile' post.author %}"
+          class="font-medium hover:underline"
+          onclick="event.stopPropagation()"
+          onkeydown="event.stopPropagation()"
+        >
+          u/{{ post.author }}
+        </a>
         <span>&bull;</span>
         <span>{{ post.timeAgo }}</span>
       </div>
@@ -87,7 +95,14 @@
 
       <div class="feed-tags">
         {% for tag in post.tags %}
-          <span class="feed-tag">{{ tag }}</span>
+          <a
+            href="{{ tag.url }}"
+            class="feed-tag feed-tag-link"
+            onclick="event.stopPropagation()"
+            onkeydown="event.stopPropagation()"
+          >
+            {{ tag.name }}
+          </a>
         {% endfor %}
       </div>
 

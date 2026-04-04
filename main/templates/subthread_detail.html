@@ -8,8 +8,6 @@
     </aside>
 
     <div class="min-w-0 space-y-4">
-      <a href="{% url 'main:index' %}" class="inline-block text-sm text-purple-600 hover:underline">&larr; Back to feed</a>
-
       <section class="landing-panel p-6 sm:p-8">
         <div class="flex flex-col gap-6 sm:gap-7">
           <div>
@@ -21,6 +19,14 @@
               <span>&bull;</span>
               <span>created by {{ subthread.created_by.username }}</span>
             </div>
+            {% if user.is_superuser %}
+            <div class="superuser-panel superuser-panel-subthread">
+              <div class="superuser-panel-head">
+                <span class="superuser-panel-kicker">Superuser Controls</span>
+                <span class="superuser-panel-note">Full subthread moderation</span>
+              </div>
+            </div>
+            {% endif %}
           </div>
         </div>
       </section>
@@ -40,10 +46,42 @@
     <aside class="self-start">
       <div class="rail-layer space-y-4">
         {% if user.is_authenticated %}
-        <div class="bg-white p-4 rounded-lg shadow border">
-          <h3 class="font-semibold mb-2">Create New Post</h3>
-          <button id="create-post-btn" type="button" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 font-medium">+ Create Post</button>
+        <div class="subthread-action-row">
+          <button id="create-post-btn" type="button" class="subthread-action-button subthread-action-button-primary">
+            + Create Post
+          </button>
+          {% if subthread_is_joined %}
+            <div class="subthread-membership-stack">
+              <span class="subthread-action-button subthread-action-button-secondary subthread-action-button-static">
+                Joined
+              </span>
+              <form method="post" action="{% url 'main:leave_subthread' subthread.name %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="subthread-inline-action subthread-inline-action-danger">
+                  Leave subthread
+                </button>
+              </form>
+            </div>
+          {% else %}
+            <form method="post" action="{% url 'main:join_subthread' subthread.name %}" class="subthread-action-slot">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="subthread-action-button subthread-action-button-secondary subthread-action-button-fill">
+                Join
+              </button>
+            </form>
+          {% endif %}
         </div>
+        {% if can_manage_subthread %}
+        <form method="post" action="{% url 'main:delete_subthread' subthread.name %}" onsubmit="return window.confirm('Delete d/{{ subthread.name }} and everything in it?');">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'main:index' %}">
+          <button type="submit" class="subthread-inline-action subthread-inline-action-danger subthread-inline-action-block">
+            Delete subthread
+          </button>
+        </form>
+        {% endif %}
         {% endif %}
 
         <div>
@@ -91,6 +129,11 @@
           <label for="post-content" class="modal-label">Content</label>
           {% include "components/code_toolbar.html" with target_id="post-content" %}
           <textarea id="post-content" name="content" placeholder="What do you want to share?" class="modal-field modal-field-tall resize-y" rows="6" required></textarea>
+        </div>
+        <div class="modal-field-group">
+          <label for="post-tags" class="modal-label">Tags</label>
+          <input id="post-tags" type="text" name="tags" placeholder="e.g. python, backend, debugging" class="modal-field">
+          <p class="modal-hint">Use commas to separate up to five tags.</p>
         </div>
         <div class="modal-actions">
           <button type="button" id="cancel-post" class="modal-button modal-button-secondary">Cancel</button>

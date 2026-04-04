@@ -32,22 +32,22 @@
         </div>
       </section>
 
-      <section class="landing-panel p-5 sm:p-6">
+      <section class="landing-panel profile-activity-panel">
         <div class="profile-tab-row">
           <a
-            href="{% url 'main:profile' %}?tab=overview"
+            href="{% url 'main:user_profile' profile_user.username %}?tab=overview"
             class="profile-tab{% if active_tab == 'overview' %} profile-tab-active{% endif %}"
           >
             Overview
           </a>
           <a
-            href="{% url 'main:profile' %}?tab=posts"
+            href="{% url 'main:user_profile' profile_user.username %}?tab=posts"
             class="profile-tab{% if active_tab == 'posts' %} profile-tab-active{% endif %}"
           >
             Posts
           </a>
           <a
-            href="{% url 'main:profile' %}?tab=comments"
+            href="{% url 'main:user_profile' profile_user.username %}?tab=comments"
             class="profile-tab{% if active_tab == 'comments' %} profile-tab-active{% endif %}"
           >
             Comments
@@ -168,7 +168,9 @@
       </section>
 
       <section class="landing-panel p-4">
-        <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Your Subthreads</h2>
+        <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+          {% if is_own_profile %}Your Subthreads{% else %}Subthreads{% endif %}
+        </h2>
         <div class="mt-4 space-y-3">
           {% for sub in owned_subthreads %}
             {% include "components/subthread_card.html" with sub=sub %}
