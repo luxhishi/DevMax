@@ -1,0 +1,48 @@
+<div class="user-hover-preview">
+  <a href="{{ hover_profile_url }}" class="user-hover-preview-head">
+    <span class="user-hover-avatar">
+      {% if hover_profile_photo_url %}
+        <img src="{{ hover_profile_photo_url }}" alt="Profile photo for u/{{ hover_user.username }}" class="user-hover-avatar-image">
+      {% else %}
+        {{ hover_user.username|first|upper }}
+      {% endif %}
+    </span>
+    <span class="user-hover-copy">
+      <span class="user-hover-name">{{ hover_user.username }}</span>
+      <span class="user-hover-handle">u/{{ hover_user.username }}</span>
+      <span class="user-hover-meta">Joined {{ hover_user.date_joined|date:"M j, Y" }}</span>
+    </span>
+  </a>
+
+  <div class="user-hover-aura">
+    <span class="user-hover-aura-label">Aura</span>
+    <span class="user-hover-aura-value">{{ hover_reputation.total_aura_display }}</span>
+  </div>
+
+  <div class="user-hover-stats">
+    <div class="user-hover-stat">
+      <span class="user-hover-stat-value">{{ hover_reputation.upvote_total_display }}</span>
+      <span class="user-hover-stat-label">Upvotes earned</span>
+    </div>
+    <div class="user-hover-stat">
+      <span class="user-hover-stat-value">{{ hover_reputation.achievement_total }}</span>
+      <span class="user-hover-stat-label">Achievements</span>
+    </div>
+  </div>
+
+  <div class="user-hover-achievements">
+    <p class="user-hover-section-label">Achievements</p>
+    {% if hover_reputation.earned_achievement_rows %}
+      <div class="user-hover-achievement-list">
+        {% for achievement in hover_reputation.earned_achievement_rows %}
+          <div class="user-hover-achievement-row">
+            {% include "components/achievement_chip.html" with achievement=achievement %}
+            <span class="user-hover-achievement-count">{{ achievement.count_label }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="user-hover-empty">No achievements yet.</p>
+    {% endif %}
+  </div>
+</div>

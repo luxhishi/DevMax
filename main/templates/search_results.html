@@ -62,7 +62,12 @@
         {% if profile_results %}
           <div class="search-profile-grid">
             {% for profile in profile_results %}
-              <a href="{% url 'main:user_profile' profile.username %}" class="search-profile-card">
+              <a
+                href="{% url 'main:user_profile' profile.username %}"
+                class="search-profile-card"
+                data-user-hover-card
+                data-user-hover-url="{% url 'main:user_hover_card' profile.username %}"
+              >
                 <span class="search-profile-avatar">{{ profile.username|first|upper }}</span>
                 <span class="search-profile-copy">
                   <span class="search-profile-name">u/{{ profile.username }}</span>

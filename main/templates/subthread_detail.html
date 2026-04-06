@@ -119,7 +119,7 @@
         </button>
       </div>
 
-      <form method="post" action="{% url 'main:create_post' subthread.name %}" class="modal-form">
+      <form method="post" action="{% url 'main:create_post' subthread.name %}" class="modal-form" data-single-submit-form>
         {% csrf_token %}
         <div class="modal-field-group">
           <label for="post-title" class="modal-label">Title</label>
@@ -137,7 +137,15 @@
         </div>
         <div class="modal-actions">
           <button type="button" id="cancel-post" class="modal-button modal-button-secondary">Cancel</button>
-          <button type="submit" class="modal-button modal-button-primary">Create Post</button>
+          <button
+            type="submit"
+            class="modal-button modal-button-primary"
+            data-submit-loading-button
+            data-loading-label="Creating..."
+          >
+            <span class="modal-button-spinner" aria-hidden="true"></span>
+            <span data-submit-button-label>Create Post</span>
+          </button>
         </div>
       </form>
     </div>
@@ -245,6 +253,31 @@ document.addEventListener('DOMContentLoaded', function() {
     openId: 'create-post-btn',
     cancelId: 'cancel-post',
     closeId: 'close-post-x',
+  });
+
+  document.querySelectorAll('[data-single-submit-form]').forEach((form) => {
+    const submitButton = form.querySelector('[data-submit-loading-button]');
+    const submitLabel = submitButton ? submitButton.querySelector('[data-submit-button-label]') : null;
+    const loadingLabel = submitButton ? (submitButton.dataset.loadingLabel || 'Loading...') : 'Loading...';
+
+    form.addEventListener('submit', (event) => {
+      if (form.dataset.submitting === 'true') {
+        event.preventDefault();
+        return;
+      }
+
+      form.dataset.submitting = 'true';
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.classList.add('is-loading');
+        submitButton.setAttribute('aria-busy', 'true');
+      }
+
+      if (submitLabel) {
+        submitLabel.textContent = loadingLabel;
+      }
+    });
   });
 });
 </script>

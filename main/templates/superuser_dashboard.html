@@ -60,9 +60,22 @@
 
           <div class="dashboard-list">
             {% for post in dashboard_posts %}
-              <a href="{{ post.detail_url }}" class="dashboard-list-card">
+              <div
+                class="dashboard-list-card cursor-pointer"
+                role="link"
+                tabindex="0"
+                onclick="window.location.href='{{ post.detail_url }}'"
+                onkeydown="if (event.key === 'Enter') window.location.href='{{ post.detail_url }}'"
+              >
                 <div class="dashboard-list-meta">
-                  <span class="font-semibold text-purple-600">d/{{ post.subthread }}</span>
+                  <a
+                    href="{% url 'main:subthread_detail' post.subthread %}"
+                    class="font-semibold text-purple-600 hover:underline"
+                    onclick="event.stopPropagation()"
+                    onkeydown="event.stopPropagation()"
+                  >
+                    d/{{ post.subthread }}
+                  </a>
                   <span>&bull;</span>
                   <span>u/{{ post.author }}</span>
                   <span>&bull;</span>
@@ -70,7 +83,7 @@
                 </div>
                 <p class="dashboard-list-title">{{ post.title }}</p>
                 <p class="dashboard-list-copy">{{ post.content|truncatechars:150 }}</p>
-              </a>
+              </div>
             {% empty %}
               <div class="profile-empty">No posts yet.</div>
             {% endfor %}

@@ -73,20 +73,37 @@
     </div>
 
     <div class="feed-card-main">
-      <div class="feed-meta">
-        <span class="font-semibold text-purple-600">d/{{ post.subthread }}</span>
-        <span>&bull;</span>
-        <span>Posted by</span>
-        <a
-          href="{% url 'main:user_profile' post.author %}"
-          class="font-medium hover:underline"
-          onclick="event.stopPropagation()"
-          onkeydown="event.stopPropagation()"
-        >
-          u/{{ post.author }}
-        </a>
-        <span>&bull;</span>
-        <span>{{ post.timeAgo }}</span>
+      <div class="feed-card-head">
+        <div class="feed-meta">
+          <a
+            href="{% url 'main:subthread_detail' post.subthread %}"
+            class="font-semibold text-purple-600 hover:underline"
+            onclick="event.stopPropagation()"
+            onkeydown="event.stopPropagation()"
+          >
+            d/{{ post.subthread }}
+          </a>
+          <span>&bull;</span>
+          <span>Posted by</span>
+          <a
+            href="{% url 'main:user_profile' post.author %}"
+            class="font-medium hover:underline"
+            data-user-hover-card
+            data-user-hover-url="{% url 'main:user_hover_card' post.author %}"
+            onclick="event.stopPropagation()"
+            onkeydown="event.stopPropagation()"
+          >
+            u/{{ post.author }}
+          </a>
+          <span>&bull;</span>
+          <span>{{ post.timeAgo }}</span>
+        </div>
+
+        {% if post.achievement %}
+          <div class="feed-achievement-row feed-achievement-row-corner">
+            {% include "components/achievement_chip.html" with achievement=post.achievement compact="true" %}
+          </div>
+        {% endif %}
       </div>
 
       <h2 class="feed-title">{{ post.title }}</h2>

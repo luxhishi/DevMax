@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import resolve, reverse
 
@@ -6,6 +7,11 @@ from .models import AdminAuditLog, Comment, Notification, Post, Subthread, Subth
 
 
 class RoutingTests(TestCase):
+    TEST_STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+
     def test_root_redirects_to_main_index(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 302)
@@ -23,6 +29,9 @@ class RoutingTests(TestCase):
         self.assertEqual(reverse("main:update_display_mode"), "/main/display-mode/")
         self.assertEqual(reverse("main:login"), "/main/login/")
         self.assertEqual(reverse("main:profile"), "/main/profile/")
+        self.assertEqual(reverse("main:update_profile_photo"), "/main/profile/photo/")
+        self.assertEqual(reverse("main:update_profile_bio"), "/main/profile/bio/")
+        self.assertEqual(reverse("main:user_hover_card", args=["alice"]), "/main/u/alice/hover-card/")
         self.assertEqual(reverse("main:user_profile", args=["alice"]), "/main/u/alice/")
         self.assertEqual(reverse("main:subthread_detail", args=["python"]), "/main/d/python/")
         self.assertEqual(reverse("main:join_subthread", args=["python"]), "/main/d/python/join/")
@@ -400,6 +409,67 @@ class RoutingTests(TestCase):
         notification.refresh_from_db()
         self.assertEqual(read_response.status_code, 200)
         self.assertTrue(notification.is_read)
+
+    def test_post_badge_threshold_creates_achievement_notification(self):
+        author = User.objects.create_user(username="badgeauthor", password="testpass123")
+        voter = User.objects.create_user(username="postvoter", password="testpass123")
+        subthread = Subthread.objects.create(name="badge-notify-post", description="Badges", created_by=author)
+        post = Post.objects.create(
+            title="Threshold post",
+            content="Content",
+            subthread=subthread,
+            author=author,
+            manual_upvotes=4,
+            upvotes=4,
+        )
+
+        self.client.force_login(voter)
+        response = self.client.post(reverse("main:vote_post", args=[post.id]), {"vote_type": "up"})
+
+        notification = Notification.objects.get(
+            user=author,
+            notification_type=Notification.TYPE_ACHIEVEMENT_BEGINNER,
+            post=post,
+            comment__isnull=True,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(notification.message, "You have been awarded the Baby Steps badge! +50 Aura >:)")
+        self.assertEqual(
+            notification.target_url,
+            reverse("main:post_detail", kwargs={"name": subthread.name, "post_id": post.id}),
+        )
+
+    def test_comment_badge_threshold_creates_achievement_notification_with_comment_anchor(self):
+        post_author = User.objects.create_user(username="commentpostowner", password="testpass123")
+        comment_author = User.objects.create_user(username="commentbadgeowner", password="testpass123")
+        voter = User.objects.create_user(username="commentvoter", password="testpass123")
+        subthread = Subthread.objects.create(name="badge-notify-comment", description="Badges", created_by=post_author)
+        post = Post.objects.create(title="Parent post", content="Body", subthread=subthread, author=post_author)
+        comment = Comment.objects.create(
+            post=post,
+            author=comment_author,
+            content="Helpful comment",
+            manual_upvotes=9,
+            upvotes=9,
+        )
+
+        self.client.force_login(voter)
+        response = self.client.post(reverse("main:vote_comment", args=[comment.id]), {"vote_type": "up"})
+
+        notification = Notification.objects.get(
+            user=comment_author,
+            notification_type=Notification.TYPE_ACHIEVEMENT_INTERMEDIATE,
+            post=post,
+            comment=comment,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(notification.message, "You have been awarded the Adept badge! +80 Aura >:)")
+        self.assertEqual(
+            notification.target_url,
+            f"{reverse('main:post_detail', kwargs={'name': subthread.name, 'post_id': post.id})}#comments",
+        )
 
     def test_empty_subthread_gets_real_welcome_post(self):
         user = User.objects.create_user(username="bob", password="testpass123")
@@ -927,6 +997,156 @@ class RoutingTests(TestCase):
         self.assertContains(response, f'href="{reverse("main:user_profile", args=[user.username])}?tab=overview"')
         self.assertContains(response, f'href="{reverse("main:user_profile", args=[user.username])}?tab=posts"')
         self.assertContains(response, f'href="{reverse("main:user_profile", args=[user.username])}?tab=comments"')
+
+    def test_own_profile_shows_hover_edit_photo_controls(self):
+        user = User.objects.create_user(username="avatarowner", password="testpass123")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("main:user_profile", args=[user.username]))
+
+        self.assertContains(response, 'id="profile-photo-form"')
+        self.assertContains(response, 'id="profile-photo-input"')
+        self.assertContains(response, 'id="profile-photo-trigger"')
+        self.assertContains(response, 'class="profile-avatar-edit"')
+
+    def test_profile_shows_default_bio_when_empty(self):
+        user = User.objects.create_user(username="biodefault", password="testpass123")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("main:user_profile", args=[user.username]))
+
+        self.assertContains(response, "No bio yet")
+        self.assertContains(response, 'id="profile-bio-trigger"')
+
+    def test_profile_bio_update_persists_and_renders(self):
+        user = User.objects.create_user(username="biowriter", password="testpass123")
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("main:update_profile_bio"),
+            {"bio": "Shipping Django features and tinkering with compilers."},
+            follow=True,
+        )
+
+        preference = UserPreference.objects.get(user=user)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(preference.bio, "Shipping Django features and tinkering with compilers.")
+        self.assertContains(response, "Bio updated.")
+        self.assertContains(response, "Shipping Django features and tinkering with compilers.")
+
+    def test_profile_bio_can_be_cleared_back_to_default_text(self):
+        user = User.objects.create_user(username="bioclear", password="testpass123")
+        UserPreference.objects.create(user=user, bio="Previously set bio")
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("main:update_profile_bio"),
+            {"bio": ""},
+            follow=True,
+        )
+
+        preference = UserPreference.objects.get(user=user)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(preference.bio, "")
+        self.assertContains(response, "Bio cleared.")
+        self.assertContains(response, "No bio yet")
+
+    def test_profile_photo_upload_updates_preference_and_renders_image(self):
+        user = User.objects.create_user(username="photouser", password="testpass123")
+        self.client.force_login(user)
+
+        with self.settings(MEDIA_URL="/media/", STORAGES=self.TEST_STORAGES):
+            response = self.client.post(
+                reverse("main:update_profile_photo"),
+                {
+                    "profile_photo": SimpleUploadedFile(
+                        "avatar.png",
+                        b"fake image bytes",
+                        content_type="image/png",
+                    )
+                },
+                follow=True,
+            )
+
+            preference = UserPreference.objects.get(user=user)
+            uploaded_url = preference.profile_photo.url
+
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(preference.profile_photo.name.startswith("profile_photos/"))
+            self.assertContains(response, "Profile photo updated.")
+            self.assertContains(response, f'src="{uploaded_url}"')
+
+    def test_profile_photo_upload_rejects_non_image_files(self):
+        user = User.objects.create_user(username="badphoto", password="testpass123")
+        self.client.force_login(user)
+
+        with self.settings(MEDIA_URL="/media/", STORAGES=self.TEST_STORAGES):
+            response = self.client.post(
+                reverse("main:update_profile_photo"),
+                {
+                    "profile_photo": SimpleUploadedFile(
+                        "avatar.txt",
+                        b"not an image",
+                        content_type="text/plain",
+                    )
+                },
+                follow=True,
+            )
+
+            preference = UserPreference.objects.get(user=user)
+
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(bool(preference.profile_photo))
+            self.assertContains(response, "Use a JPG, PNG, GIF, or WebP image for your profile photo.")
+
+    def test_profile_displays_computed_aura_and_achievement_counts(self):
+        owner = User.objects.create_user(username="auradev", password="testpass123")
+        responder = User.objects.create_user(username="aurafriend", password="testpass123")
+        subthread = Subthread.objects.create(name="aura-zone", description="Aura", created_by=owner)
+        post = Post.objects.create(title="Aura post", content="Content", subthread=subthread, author=owner, upvotes=5)
+        owner_comment = Comment.objects.create(post=post, author=owner, content="Owner comment", upvotes=10)
+        Comment.objects.create(post=post, author=responder, content="Top-level response")
+        Comment.objects.create(post=post, author=responder, parent=owner_comment, content="Reply response")
+
+        self.client.force_login(owner)
+        response = self.client.get(reverse("main:user_profile", args=[owner.username]))
+
+        reputation = response.context["profile_reputation"]
+
+        self.assertEqual(reputation["total_aura"], 225)
+        self.assertEqual(reputation["achievement_total"], 2)
+        self.assertContains(response, "225 Aura")
+        self.assertContains(response, "Achievements")
+        self.assertContains(response, "Baby Steps")
+        self.assertContains(response, "Adept")
+
+    def test_user_hover_card_view_renders_aura_and_achievement_data(self):
+        owner = User.objects.create_user(username="hoverowner", password="testpass123")
+        subthread = Subthread.objects.create(name="hover-zone", description="Hover", created_by=owner)
+        Post.objects.create(title="Advanced post", content="Content", subthread=subthread, author=owner, upvotes=15)
+
+        response = self.client.get(reverse("main:user_hover_card", args=[owner.username]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Aura")
+        self.assertContains(response, "225")
+        self.assertContains(response, "To The Stars")
+        self.assertContains(response, "hoverowner")
+
+    def test_post_detail_renders_achievement_badges_and_user_hover_trigger(self):
+        owner = User.objects.create_user(username="badgeowner", password="testpass123")
+        commenter = User.objects.create_user(username="badgecommenter", password="testpass123")
+        subthread = Subthread.objects.create(name="badge-zone", description="Badges", created_by=owner)
+        post = Post.objects.create(title="Badge post", content="Content", subthread=subthread, author=owner, upvotes=15)
+        Comment.objects.create(post=post, author=commenter, content="Badge comment", upvotes=5)
+
+        response = self.client.get(reverse("main:post_detail", kwargs={"name": subthread.name, "post_id": post.id}))
+
+        self.assertContains(response, f'data-user-hover-url="{reverse("main:user_hover_card", args=[owner.username])}"')
+        self.assertContains(response, 'data-achievement-level="advanced"')
+        self.assertContains(response, 'data-achievement-level="beginner"')
 
     def test_profile_posts_tab_shows_only_posts(self):
         user = User.objects.create_user(username="mira", password="testpass123")

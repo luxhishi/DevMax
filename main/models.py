@@ -12,6 +12,8 @@ class UserPreference(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="preference")
     display_mode = models.CharField(max_length=5, choices=DISPLAY_MODE_CHOICES, default="light")
+    profile_photo = models.FileField(upload_to="profile_photos/", blank=True)
+    bio = models.TextField(blank=True)
 
     def __str__(self):
         return f"Preferences for {self.user.username}"
@@ -129,11 +131,17 @@ class Notification(models.Model):
     TYPE_SUBTHREAD_POST = "subthread_post"
     TYPE_POST_COMMENT = "post_comment"
     TYPE_COMMENT_REPLY = "comment_reply"
+    TYPE_ACHIEVEMENT_BEGINNER = "achievement_beginner"
+    TYPE_ACHIEVEMENT_INTERMEDIATE = "achievement_intermediate"
+    TYPE_ACHIEVEMENT_ADVANCED = "achievement_advanced"
 
     TYPE_CHOICES = (
         (TYPE_SUBTHREAD_POST, "New subthread post"),
         (TYPE_POST_COMMENT, "Comment on your post"),
         (TYPE_COMMENT_REPLY, "Reply to your comment"),
+        (TYPE_ACHIEVEMENT_BEGINNER, "Beginner achievement badge"),
+        (TYPE_ACHIEVEMENT_INTERMEDIATE, "Intermediate achievement badge"),
+        (TYPE_ACHIEVEMENT_ADVANCED, "Advanced achievement badge"),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
@@ -155,7 +163,7 @@ class Notification(models.Model):
     def target_url(self):
         if self.post_id:
             url = reverse("main:post_detail", kwargs={"name": self.post.subthread.name, "post_id": self.post_id})
-            if self.notification_type in {self.TYPE_POST_COMMENT, self.TYPE_COMMENT_REPLY}:
+            if self.comment_id:
                 return f"{url}#comments"
             return url
         if self.subthread_id:
@@ -171,12 +179,28 @@ class Notification(models.Model):
             return f"{actor_name} commented on your post"
         if self.notification_type == self.TYPE_COMMENT_REPLY:
             return f"{actor_name} replied to your comment"
+        if self.notification_type == self.TYPE_ACHIEVEMENT_BEGINNER:
+            return "You have been awarded the Baby Steps badge! +50 Aura >:)"
+        if self.notification_type == self.TYPE_ACHIEVEMENT_INTERMEDIATE:
+            return "You have been awarded the Adept badge! +80 Aura >:)"
+        if self.notification_type == self.TYPE_ACHIEVEMENT_ADVANCED:
+            return "You have been awarded the To The Stars badge! +150 Aura >:)"
         return f"{actor_name} sent you a notification"
 
     @property
     def detail(self):
         if self.notification_type == self.TYPE_SUBTHREAD_POST and self.post_id:
             return self.post.title
+        if self.notification_type in {
+            self.TYPE_ACHIEVEMENT_BEGINNER,
+            self.TYPE_ACHIEVEMENT_INTERMEDIATE,
+            self.TYPE_ACHIEVEMENT_ADVANCED,
+        }:
+            if self.comment_id:
+                return self.comment.content
+            if self.post_id:
+                return self.post.title
+            return ""
         if self.comment_id:
             return self.comment.content
         if self.post_id:

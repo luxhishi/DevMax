@@ -21,4 +21,5 @@ def display_mode(request):
         "display_mode": preference.display_mode,
         "header_notifications": notifications,
         "unread_notification_count": unread_count,
+        "header_avatar_url": preference.profile_photo.url if preference.profile_photo else "",
     }

@@ -47,12 +47,23 @@
 
   <div class="comment-main">
     <div class="comment-meta">
-      <a href="{% url 'main:user_profile' comment.author.username %}" class="comment-author hover:underline">
+      <a
+        href="{% url 'main:user_profile' comment.author.username %}"
+        class="comment-author hover:underline"
+        data-user-hover-card
+        data-user-hover-url="{% url 'main:user_hover_card' comment.author.username %}"
+      >
         {{ comment.author.username }}
       </a>
       <span>&bull;</span>
       <span>{{ comment.time_ago }}</span>
     </div>
+
+    {% if comment.achievement %}
+      <div class="comment-achievement-row">
+        {% include "components/achievement_chip.html" with achievement=comment.achievement %}
+      </div>
+    {% endif %}
 
     <div class="comment-body">
       <div class="comment-text post-rich-content">{{ comment.content|render_post_content }}</div>

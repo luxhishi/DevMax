@@ -85,6 +85,11 @@
             <div class="question-main">
               <div class="question-title-row">
                 <h2 class="question-title">{{ question.title }}</h2>
+                {% if question.achievement %}
+                  <div class="question-achievement-chip">
+                    {% include "components/achievement_chip.html" with achievement=question.achievement %}
+                  </div>
+                {% endif %}
               </div>
 
               <p class="question-excerpt">{{ question.content|truncatechars:220 }}</p>
@@ -103,10 +108,26 @@
               </div>
 
               <div class="question-meta">
-                <span class="font-semibold text-purple-600">d/{{ question.subthread }}</span>
+                <a
+                  href="{% url 'main:subthread_detail' question.subthread %}"
+                  class="font-semibold text-purple-600 hover:underline"
+                  onclick="event.stopPropagation()"
+                  onkeydown="event.stopPropagation()"
+                >
+                  d/{{ question.subthread }}
+                </a>
                 <span>&bull;</span>
                 <span>asked by</span>
-                <span class="font-medium">u/{{ question.author }}</span>
+                <a
+                  href="{% url 'main:user_profile' question.author %}"
+                  class="font-medium hover:underline"
+                  data-user-hover-card
+                  data-user-hover-url="{% url 'main:user_hover_card' question.author %}"
+                  onclick="event.stopPropagation()"
+                  onkeydown="event.stopPropagation()"
+                >
+                  u/{{ question.author }}
+                </a>
                 <span>&bull;</span>
                 <span>{{ question.timeAgo }}</span>
               </div>

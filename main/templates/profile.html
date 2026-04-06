@@ -14,15 +14,55 @@
           <div class="profile-head">
             <div class="profile-head-top">
               <div class="profile-identity">
-                <div class="profile-avatar">{{ profile_user.username|first|upper }}</div>
+                {% if is_own_profile %}
+                  <button
+                    type="button"
+                    class="profile-avatar-shell profile-avatar-shell-editable"
+                    id="profile-photo-trigger"
+                    aria-label="Change profile photo"
+                  >
+                    <span class="profile-avatar">
+                      {% if profile_photo_url %}
+                        <img src="{{ profile_photo_url }}" alt="Profile photo for u/{{ profile_user.username }}" class="profile-avatar-image">
+                      {% else %}
+                        {{ profile_user.username|first|upper }}
+                      {% endif %}
+                    </span>
+                    <span class="profile-avatar-edit" aria-hidden="true">
+                      <span class="profile-avatar-edit-copy">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487a2.1 2.1 0 113.03 2.906L9.5 17.786l-4 1 1-3.999 10.362-10.3z"/>
+                        </svg>
+                      </span>
+                    </span>
+                  </button>
+                {% else %}
+                  <div class="profile-avatar-shell">
+                    <div class="profile-avatar">
+                      {% if profile_photo_url %}
+                        <img src="{{ profile_photo_url }}" alt="Profile photo for u/{{ profile_user.username }}" class="profile-avatar-image">
+                      {% else %}
+                        {{ profile_user.username|first|upper }}
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endif %}
                 <div class="profile-copy">
                   <p class="profile-kicker">Profile</p>
                   <h1 class="profile-name">u/{{ profile_user.username }}</h1>
-                  <p class="profile-subtitle">Developer on DevMax</p>
+                  {% if is_own_profile %}
+                    <p class="profile-subtitle{% if profile_bio_is_empty %} profile-subtitle-empty{% endif %}">{{ profile_bio }}</p>
+                    <button type="button" id="profile-bio-trigger" class="profile-bio-button" aria-label="Edit bio">
+                      <span class="profile-bio-edit">Edit bio</span>
+                    </button>
+                  {% else %}
+                    <p class="profile-subtitle{% if profile_bio_is_empty %} profile-subtitle-empty{% endif %}">{{ profile_bio }}</p>
+                  {% endif %}
                 </div>
               </div>
 
               <div class="profile-metrics">
+                <span class="soft-chip profile-aura-chip rounded-full px-3 py-1.5 font-semibold">{{ profile_reputation.total_aura_display }} Aura</span>
                 <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ post_count }} posts</span>
                 <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ comment_count }} comments</span>
                 <span class="soft-chip rounded-full px-3 py-1.5 font-semibold">{{ subthread_count }} subthreads</span>
@@ -71,6 +111,11 @@
                       <span>&bull;</span>
                       <span>{{ item.data.timeAgo }}</span>
                     </div>
+                    {% if item.data.achievement %}
+                      <div class="profile-comment-achievement">
+                        {% include "components/achievement_chip.html" with achievement=item.data.achievement %}
+                      </div>
+                    {% endif %}
                     <p class="mt-2 text-sm font-semibold text-gray-900">On {{ item.data.post_title }}</p>
                     <p class="profile-comment-text">{{ item.data.content|truncatechars:180 }}</p>
                   </a>
@@ -100,6 +145,11 @@
                     <span>&bull;</span>
                     <span>{{ comment.timeAgo }}</span>
                   </div>
+                  {% if comment.achievement %}
+                    <div class="profile-comment-achievement">
+                      {% include "components/achievement_chip.html" with achievement=comment.achievement %}
+                    </div>
+                  {% endif %}
                   <p class="mt-2 text-sm font-semibold text-gray-900">On {{ comment.post_title }}</p>
                   <p class="profile-comment-text">{{ comment.content|truncatechars:220 }}</p>
                 </a>
@@ -114,13 +164,17 @@
       </section>
     </div>
 
-    <aside class="space-y-4 self-start rail-layer">
+    <aside class="space-y-4 self-start rail-layer profile-sidebar-scroll">
       <section class="landing-panel p-4">
         <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Stats</h2>
         <div class="mt-4 space-y-3">
           <div class="flex items-center justify-between text-sm">
             <span class="text-gray-500">Cake day</span>
             <span class="font-semibold text-gray-900">{{ profile_user.date_joined|date:"M j, Y" }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Aura</span>
+            <span class="font-semibold text-gray-900">{{ profile_reputation.total_aura_display }}</span>
           </div>
           <div class="flex items-center justify-between text-sm">
             <span class="text-gray-500">Posts</span>
@@ -131,6 +185,10 @@
             <span class="font-semibold text-gray-900">{{ comment_count }}</span>
           </div>
           <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-500">Achievements</span>
+            <span class="font-semibold text-gray-900">{{ profile_reputation.achievement_total }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
             <span class="text-gray-500">Communities</span>
             <span class="font-semibold text-gray-900">{{ subthread_count }}</span>
           </div>
@@ -138,14 +196,56 @@
       </section>
 
       <section class="landing-panel p-4">
+        <div class="profile-sidebar-head">
+          <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Achievements</h2>
+          <span class="profile-sidebar-count">{{ profile_reputation.achievement_total }}</span>
+        </div>
+        {% if profile_reputation.earned_achievement_rows %}
+          <div class="achievement-summary-list">
+            {% for achievement in profile_reputation.earned_achievement_rows %}
+              <div class="achievement-summary-row">
+                {% include "components/achievement_chip.html" with achievement=achievement %}
+                <div class="achievement-summary-copy">
+                  <p class="achievement-summary-count">{{ achievement.count_label }}</p>
+                  <p class="achievement-summary-note">{{ achievement.aura_bonus_display }} each</p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="achievement-empty-state">
+            No achievements yet. Reach 5 upvotes on a post or comment to unlock your first badge.
+          </p>
+        {% endif %}
+      </section>
+
+      <section class="landing-panel p-4">
         <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Top Posts</h2>
         <div class="mt-4 space-y-3">
           {% for post in top_posts %}
-            <a href="{{ post.detail_url }}" class="block rounded-xl border border-gray-200 p-3 hover:bg-gray-50">
-              <p class="text-xs font-semibold text-purple-600">d/{{ post.subthread }}</p>
+            <div
+              class="block cursor-pointer rounded-xl border border-gray-200 p-3 hover:bg-gray-50"
+              role="link"
+              tabindex="0"
+              onclick="window.location.href='{{ post.detail_url }}'"
+              onkeydown="if (event.key === 'Enter') window.location.href='{{ post.detail_url }}'"
+            >
+              <a
+                href="{% url 'main:subthread_detail' post.subthread %}"
+                class="text-xs font-semibold text-purple-600 hover:underline"
+                onclick="event.stopPropagation()"
+                onkeydown="event.stopPropagation()"
+              >
+                d/{{ post.subthread }}
+              </a>
               <p class="mt-1 text-sm font-semibold text-gray-900">{{ post.title }}</p>
+              {% if post.achievement %}
+                <div class="profile-top-post-achievement">
+                  {% include "components/achievement_chip.html" with achievement=post.achievement %}
+                </div>
+              {% endif %}
               <p class="mt-2 text-xs text-gray-500">{{ post.upvotes }} upvotes</p>
-            </a>
+            </div>
           {% empty %}
             <p class="text-sm text-gray-500">No top posts yet.</p>
           {% endfor %}
@@ -159,6 +259,11 @@
             <a href="{{ comment.detail_url }}" class="block rounded-xl border border-gray-200 p-3 hover:bg-gray-50">
               <p class="text-xs font-semibold text-purple-600">d/{{ comment.subthread }}</p>
               <p class="mt-1 text-xs text-gray-500">On {{ comment.post_title }}</p>
+              {% if comment.achievement %}
+                <div class="profile-top-post-achievement">
+                  {% include "components/achievement_chip.html" with achievement=comment.achievement %}
+                </div>
+              {% endif %}
               <p class="mt-2 text-sm text-gray-900">{{ comment.content|truncatechars:96 }}</p>
             </a>
           {% empty %}
@@ -182,4 +287,309 @@
     </aside>
   </div>
 </div>
+{% if is_own_profile %}
+<div id="profile-bio-modal" class="modal-overlay" aria-hidden="true">
+  <div class="modal-card modal-shell">
+    <div class="modal-header">
+      <div class="modal-copy">
+        <p class="modal-kicker">Profile Bio</p>
+        <h3 class="modal-title">Edit your bio</h3>
+        <p class="modal-note">Tell people a little about what you build. Leave it empty to show “No bio yet”.</p>
+      </div>
+      <button
+        type="button"
+        id="close-profile-bio-x"
+        class="modal-close"
+        aria-label="Close profile bio modal"
+      >
+        &times;
+      </button>
+    </div>
+
+    <form
+      id="profile-bio-form"
+      method="post"
+      action="{% url 'main:update_profile_bio' %}"
+      class="modal-form"
+    >
+      {% csrf_token %}
+      <div class="modal-field-group">
+        <label for="profile-bio-input" class="modal-label">Bio</label>
+        <textarea
+          id="profile-bio-input"
+          name="bio"
+          class="modal-field modal-field-tall resize-y"
+          rows="5"
+          maxlength="280"
+          placeholder="Share your stack, interests, or what you're working on."
+        >{% if not profile_bio_is_empty %}{{ profile_bio }}{% endif %}</textarea>
+        <p class="modal-hint">Up to 280 characters.</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancel-profile-bio" class="modal-button modal-button-secondary">Cancel</button>
+        <button
+          type="submit"
+          class="modal-button modal-button-primary"
+          data-submit-loading-button
+          data-loading-label="Saving..."
+        >
+          <span class="modal-button-spinner" aria-hidden="true"></span>
+          <span data-submit-button-label>Save Bio</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="profile-photo-modal" class="modal-overlay" aria-hidden="true">
+  <div class="modal-card modal-shell">
+    <div class="modal-header">
+      <div class="modal-copy">
+        <p class="modal-kicker">Profile Photo</p>
+        <h3 class="modal-title">Update your photo</h3>
+        <p class="modal-note">Choose a JPG, PNG, GIF, or WebP image up to 5 MB.</p>
+      </div>
+      <button
+        type="button"
+        id="close-profile-photo-x"
+        class="modal-close"
+        aria-label="Close profile photo modal"
+      >
+        &times;
+      </button>
+    </div>
+
+    <form
+      id="profile-photo-form"
+      method="post"
+      action="{% url 'main:update_profile_photo' %}"
+      enctype="multipart/form-data"
+      class="modal-form"
+      data-single-submit-form
+    >
+      {% csrf_token %}
+      <div class="modal-field-group">
+        <label for="profile-photo-input" class="modal-label">Photo</label>
+        <div class="profile-file-picker">
+          <input id="profile-photo-input" type="file" name="profile_photo" accept="image/*" class="profile-file-input" required>
+          <button type="button" id="profile-photo-select" class="profile-file-trigger">Choose Photo</button>
+          <span id="profile-photo-filename" class="profile-file-name">No file chosen</span>
+        </div>
+        <p id="profile-photo-error" class="modal-inline-error" hidden></p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancel-profile-photo" class="modal-button modal-button-secondary">Cancel</button>
+        <button
+          type="submit"
+          class="modal-button modal-button-primary"
+          data-submit-loading-button
+          data-loading-label="Saving..."
+        >
+          <span class="modal-button-spinner" aria-hidden="true"></span>
+          <span data-submit-button-label>Save Photo</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const bioModal = document.getElementById('profile-bio-modal');
+    const bioOpenButton = document.getElementById('profile-bio-trigger');
+    const bioCancelButton = document.getElementById('cancel-profile-bio');
+    const bioCloseButton = document.getElementById('close-profile-bio-x');
+    const bioForm = document.getElementById('profile-bio-form');
+    const bioInput = document.getElementById('profile-bio-input');
+    const modal = document.getElementById('profile-photo-modal');
+    const openButton = document.getElementById('profile-photo-trigger');
+    const cancelButton = document.getElementById('cancel-profile-photo');
+    const closeButton = document.getElementById('close-profile-photo-x');
+    const form = document.getElementById('profile-photo-form');
+    const input = document.getElementById('profile-photo-input');
+    const selectButton = document.getElementById('profile-photo-select');
+    const fileName = document.getElementById('profile-photo-filename');
+    const photoError = document.getElementById('profile-photo-error');
+    const validPhotoExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const invalidPhotoTypeMessage = 'Use a JPG, PNG, GIF, or WebP image for your profile photo.';
+
+    if (!bioModal || !bioOpenButton || !bioCancelButton || !bioCloseButton || !bioForm || !bioInput) {
+      return;
+    }
+
+    if (!modal || !openButton || !cancelButton || !closeButton || !form || !input || !selectButton || !fileName || !photoError) {
+      return;
+    }
+
+    const clearPhotoError = function() {
+      photoError.hidden = true;
+      photoError.textContent = '';
+    };
+
+    const showPhotoError = function(message) {
+      photoError.hidden = false;
+      photoError.textContent = message;
+    };
+
+    const selectedPhotoIsValid = function() {
+      if (!input.files || !input.files.length) {
+        return false;
+      }
+
+      const selectedFile = input.files[0];
+      const loweredName = selectedFile.name.toLowerCase();
+      const validExtension = validPhotoExtensions.some(function(extension) {
+        return loweredName.endsWith(extension);
+      });
+
+      if (!validExtension) {
+        return false;
+      }
+
+      if (!selectedFile.type) {
+        return true;
+      }
+
+      return selectedFile.type.startsWith('image/');
+    };
+
+    const closeModal = function(targetModal) {
+      targetModal.classList.remove('is-open');
+      targetModal.setAttribute('aria-hidden', 'true');
+    };
+
+    const openModal = function(targetModal, targetField) {
+      targetModal.classList.add('is-open');
+      targetModal.setAttribute('aria-hidden', 'false');
+      targetField.focus();
+    };
+
+    bioOpenButton.addEventListener('click', function() {
+      openModal(bioModal, bioInput);
+    });
+    bioCancelButton.addEventListener('click', function() {
+      closeModal(bioModal);
+    });
+    bioCloseButton.addEventListener('click', function() {
+      closeModal(bioModal);
+    });
+
+    openButton.addEventListener('click', function() {
+      openModal(modal, selectButton);
+    });
+    cancelButton.addEventListener('click', function() {
+      closeModal(modal);
+    });
+    closeButton.addEventListener('click', function() {
+      closeModal(modal);
+    });
+    selectButton.addEventListener('click', function() {
+      input.click();
+    });
+
+    input.addEventListener('change', function() {
+      if (!input.files || !input.files.length) {
+        fileName.textContent = 'No file chosen';
+        clearPhotoError();
+        return;
+      }
+
+      fileName.textContent = input.files[0].name;
+
+      if (!selectedPhotoIsValid()) {
+        showPhotoError(invalidPhotoTypeMessage);
+        input.value = '';
+        fileName.textContent = 'No file chosen';
+        selectButton.focus();
+        return;
+      }
+
+      clearPhotoError();
+    });
+
+    bioModal.addEventListener('click', function(event) {
+      if (event.target === bioModal) {
+        closeModal(bioModal);
+      }
+    });
+
+    modal.addEventListener('click', function(event) {
+      if (event.target === modal) {
+        closeModal(modal);
+      }
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && bioModal.classList.contains('is-open')) {
+        closeModal(bioModal);
+      }
+      if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+        closeModal(modal);
+      }
+    });
+
+    bioForm.addEventListener('submit', function(event) {
+      if (bioForm.dataset.submitting === 'true') {
+        event.preventDefault();
+        return;
+      }
+
+      bioForm.dataset.submitting = 'true';
+
+      const submitButton = bioForm.querySelector('[data-submit-loading-button]');
+      const submitLabel = submitButton ? submitButton.querySelector('[data-submit-button-label]') : null;
+      const loadingLabel = submitButton ? (submitButton.dataset.loadingLabel || 'Loading...') : 'Loading...';
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.classList.add('is-loading');
+        submitButton.setAttribute('aria-busy', 'true');
+      }
+
+      if (submitLabel) {
+        submitLabel.textContent = loadingLabel;
+      }
+    });
+
+    form.addEventListener('submit', function(event) {
+      if (form.dataset.submitting === 'true') {
+        event.preventDefault();
+        return;
+      }
+
+      if (!input.files || !input.files.length) {
+        event.preventDefault();
+        showPhotoError('Choose an image before saving your profile photo.');
+        selectButton.focus();
+        return;
+      }
+
+      if (!selectedPhotoIsValid()) {
+        event.preventDefault();
+        showPhotoError(invalidPhotoTypeMessage);
+        selectButton.focus();
+        return;
+      }
+
+      form.classList.add('is-uploading');
+      form.dataset.submitting = 'true';
+      clearPhotoError();
+
+      const submitButton = form.querySelector('[data-submit-loading-button]');
+      const submitLabel = submitButton ? submitButton.querySelector('[data-submit-button-label]') : null;
+      const loadingLabel = submitButton ? (submitButton.dataset.loadingLabel || 'Loading...') : 'Loading...';
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.classList.add('is-loading');
+        submitButton.setAttribute('aria-busy', 'true');
+      }
+
+      if (submitLabel) {
+        submitLabel.textContent = loadingLabel;
+      }
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}

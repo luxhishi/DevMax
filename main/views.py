@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlencode
 
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -13,6 +14,12 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import AdminAuditLog, Comment, Notification, Post, Subthread, SubthreadMembership, Tag, UserPreference, Vote
+from .reputation import ACHIEVEMENT_LEVELS, achievement_for_upvotes, build_user_reputation_summary
+
+
+PROFILE_PHOTO_MAX_BYTES = 5 * 1024 * 1024
+PROFILE_PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+PROFILE_BIO_MAX_LENGTH = 280
 
 
 def _build_post_detail_url(post_id, subthread_name, return_to_subthread=None, anchor=None, open_comment=False):
@@ -34,6 +41,18 @@ def _build_profile_url(username, tab=None):
     if tab:
         url = f"{url}?{urlencode({'tab': tab})}"
     return url
+
+
+def _profile_photo_url(preference):
+    if preference and preference.profile_photo:
+        return preference.profile_photo.url
+    return ""
+
+
+def _profile_bio_text(preference):
+    if preference and preference.bio and preference.bio.strip():
+        return preference.bio.strip()
+    return "No bio yet"
 
 
 def _build_search_url(query="", tab=None, scope_name=None):
@@ -213,6 +232,7 @@ def _serialize_post(post, return_to_subthread=None, current_user_vote="", vote_r
         "content": post.content,
         "tags": _serialize_post_tags(post, scope_name=tag_scope_name),
         "author": post.author.username,
+        "achievement": achievement_for_upvotes(post.upvotes),
         "detail_url": _build_post_detail_url(post.id, post.subthread.name, return_to_subthread=return_to_subthread),
         "comments_url": _build_post_detail_url(
             post.id,
@@ -233,6 +253,7 @@ def _serialize_comment(comment):
         "post_title": comment.post.title,
         "subthread": comment.post.subthread.name,
         "timeAgo": _time_ago(comment.created_at),
+        "achievement": achievement_for_upvotes(comment.upvotes),
         "detail_url": _build_post_detail_url(comment.post.id, comment.post.subthread.name, anchor="comments"),
     }
 
@@ -402,6 +423,51 @@ def _sync_vote_totals(target):
     target.upvotes = vote_qs.filter(vote_type="up").count() + getattr(target, "manual_upvotes", 0)
     target.downvotes = vote_qs.filter(vote_type="down").count() + getattr(target, "manual_downvotes", 0)
     target.save(update_fields=["upvotes", "downvotes"])
+    _award_achievement_notifications(target)
+
+
+def _achievement_notification_type(level):
+    notification_type_map = {
+        "beginner": Notification.TYPE_ACHIEVEMENT_BEGINNER,
+        "intermediate": Notification.TYPE_ACHIEVEMENT_INTERMEDIATE,
+        "advanced": Notification.TYPE_ACHIEVEMENT_ADVANCED,
+    }
+    return notification_type_map[level]
+
+
+def _award_achievement_notifications(target):
+    if getattr(target, "upvotes", 0) < ACHIEVEMENT_LEVELS[0]["threshold"]:
+        return
+
+    target_kwargs = {
+        "user_id": target.author_id,
+        "notification_type": "",
+        "subthread_id": target.post.subthread_id if isinstance(target, Comment) else target.subthread_id,
+        "post_id": target.post_id if isinstance(target, Comment) else target.id,
+        "comment_id": target.id if isinstance(target, Comment) else None,
+    }
+
+    for level_config in ACHIEVEMENT_LEVELS:
+        if target.upvotes < level_config["threshold"]:
+            continue
+
+        notification_type = _achievement_notification_type(level_config["level"])
+        existing_notification = Notification.objects.filter(
+            user_id=target.author_id,
+            notification_type=notification_type,
+            post_id=target_kwargs["post_id"],
+            comment_id=target_kwargs["comment_id"],
+        ).exists()
+        if existing_notification:
+            continue
+
+        Notification.objects.create(
+            user_id=target_kwargs["user_id"],
+            notification_type=notification_type,
+            subthread_id=target_kwargs["subthread_id"],
+            post_id=target_kwargs["post_id"],
+            comment_id=target_kwargs["comment_id"],
+        )
 
 
 def _build_comment_tree(post, user):
@@ -430,6 +496,7 @@ def _build_comment_tree(post, user):
         comment.reply_count_label = "0 replies"
         comment.can_manage = _user_can_manage_comment(user, comment)
         comment.can_boost_votes = user.is_authenticated and user.is_superuser
+        comment.achievement = achievement_for_upvotes(comment.upvotes)
         comment_lookup[comment.id] = comment
 
     for comment in comments:
@@ -828,6 +895,7 @@ def post_detail(request, name, post_id):
             "timeAgo": _time_ago(post.created_at),
             "content": post.content,
             "tags": _serialize_post_tags(post, scope_name=post.subthread.name),
+            "achievement": achievement_for_upvotes(post.upvotes),
         }
         return render(
             request,
@@ -1144,6 +1212,7 @@ def profile_view(request, username):
     active_tab = request.GET.get("tab", "overview").strip().lower()
     if active_tab not in {"overview", "posts", "comments"}:
         active_tab = "overview"
+    profile_preference = UserPreference.objects.filter(user=profile_user).first()
 
     user_posts_qs = (
         Post.objects.filter(author=profile_user)
@@ -1162,6 +1231,11 @@ def profile_view(request, username):
     post_vote_map = _user_post_vote_map(request.user, user_posts)
     profile_overview_url = _build_profile_url(profile_user.username, tab="overview")
     profile_posts_url = _build_profile_url(profile_user.username, tab="posts")
+    profile_reputation = build_user_reputation_summary(
+        profile_user,
+        post_queryset=user_posts_qs,
+        comment_queryset=user_comments_qs,
+    )
 
     recent_posts = [
         _serialize_post(
@@ -1232,10 +1306,85 @@ def profile_view(request, username):
         "comment_count": user_comments_qs.count(),
         "subthread_count": owned_subthreads_qs.count(),
         "is_own_profile": request.user.is_authenticated and request.user == profile_user,
+        "profile_photo_url": _profile_photo_url(profile_preference),
+        "profile_bio": _profile_bio_text(profile_preference),
+        "profile_bio_is_empty": not (profile_preference and profile_preference.bio and profile_preference.bio.strip()),
+        "profile_reputation": profile_reputation,
         "owned_subthreads": list(owned_subthreads_qs.values("name", "description", "members")[:4]),
         **_sidebar_context(request),
     }
     return render(request, "profile.html", context)
+
+
+def user_hover_card(request, username):
+    hover_user = get_object_or_404(User, username=username)
+    hover_preference = UserPreference.objects.filter(user=hover_user).first()
+    hover_reputation = build_user_reputation_summary(hover_user)
+    context = {
+        "hover_user": hover_user,
+        "hover_profile_photo_url": _profile_photo_url(hover_preference),
+        "hover_profile_bio": _profile_bio_text(hover_preference),
+        "hover_profile_url": _build_profile_url(hover_user.username),
+        "hover_reputation": hover_reputation,
+    }
+    return render(request, "components/user_hover_card.html", context)
+
+
+@login_required
+@require_POST
+def update_profile_photo(request):
+    profile_photo = request.FILES.get("profile_photo")
+    redirect_url = _build_profile_url(request.user.username)
+
+    if not profile_photo:
+        messages.error(request, "Choose an image before saving your profile photo.")
+        return redirect(redirect_url)
+
+    lowered_name = profile_photo.name.lower()
+    valid_extension = any(lowered_name.endswith(extension) for extension in PROFILE_PHOTO_EXTENSIONS)
+    if not valid_extension:
+        messages.error(request, "Use a JPG, PNG, GIF, or WebP image for your profile photo.")
+        return redirect(redirect_url)
+
+    if profile_photo.size > PROFILE_PHOTO_MAX_BYTES:
+        messages.error(request, "Profile photos must be 5 MB or smaller.")
+        return redirect(redirect_url)
+
+    if profile_photo.content_type and not profile_photo.content_type.startswith("image/"):
+        messages.error(request, "That file does not look like an image.")
+        return redirect(redirect_url)
+
+    preference, _ = UserPreference.objects.get_or_create(user=request.user)
+    previous_photo_name = preference.profile_photo.name if preference.profile_photo else ""
+    preference.profile_photo = profile_photo
+    preference.save(update_fields=["profile_photo"])
+
+    if previous_photo_name and previous_photo_name != preference.profile_photo.name:
+        preference.profile_photo.storage.delete(previous_photo_name)
+
+    messages.success(request, "Profile photo updated.")
+    return redirect(redirect_url)
+
+
+@login_required
+@require_POST
+def update_profile_bio(request):
+    bio = request.POST.get("bio", "").strip()
+    redirect_url = _build_profile_url(request.user.username)
+
+    if len(bio) > PROFILE_BIO_MAX_LENGTH:
+        messages.error(request, f"Bio must be {PROFILE_BIO_MAX_LENGTH} characters or fewer.")
+        return redirect(redirect_url)
+
+    preference, _ = UserPreference.objects.get_or_create(user=request.user)
+    preference.bio = bio
+    preference.save(update_fields=["bio"])
+
+    if bio:
+        messages.success(request, "Bio updated.")
+    else:
+        messages.success(request, "Bio cleared. Showing \"No bio yet\" now.")
+    return redirect(redirect_url)
 
 
 @login_required
