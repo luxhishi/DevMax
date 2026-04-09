@@ -84,6 +84,22 @@
           </div>
 
           <h1 class="feed-title">{{ post.title }}</h1>
+          {% if post.is_question %}
+          <div class="feed-status-row">
+            <span class="question-status-pill question-status-pill-{{ post.question_status }}">
+              {% if post.question_status == 'solved' %}
+                Solved
+              {% elif post.question_status == 'open' %}
+                Open
+              {% else %}
+                Unanswered
+              {% endif %}
+            </span>
+            {% if post.is_solved %}
+            <span class="feed-status-copy">Accepted answer pinned below.</span>
+            {% endif %}
+          </div>
+          {% endif %}
           <div class="feed-body post-rich-content">{{ post.content|render_post_content }}</div>
 
           <div class="feed-tags">

@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import resolve, reverse
+from django.utils import timezone
 
 from .models import AdminAuditLog, Comment, Notification, Post, Subthread, SubthreadMembership, Tag, UserPreference, Vote
 
@@ -22,6 +25,7 @@ class RoutingTests(TestCase):
         self.assertEqual(reverse("main:questions"), "/main/questions/")
         self.assertEqual(reverse("main:superuser_dashboard"), "/main/superuser/")
         self.assertEqual(reverse("main:ask_question"), "/main/questions/ask/")
+        self.assertEqual(reverse("main:search_suggestions"), "/main/search/suggestions/")
         self.assertEqual(reverse("main:search"), "/main/search/")
         self.assertEqual(reverse("main:adjust_post_votes", args=[42]), "/main/admin/post/42/votes/")
         self.assertEqual(reverse("main:adjust_comment_votes", args=[42]), "/main/admin/comment/42/votes/")
@@ -40,12 +44,16 @@ class RoutingTests(TestCase):
         self.assertEqual(reverse("main:create_post", args=["python"]), "/main/d/python/create-post/")
         self.assertEqual(reverse("main:delete_post", kwargs={"name": "python", "post_id": 42}), "/main/d/python/42/delete/")
         self.assertEqual(reverse("main:post_detail", kwargs={"name": "python", "post_id": 42}), "/main/d/python/42/")
+        self.assertEqual(reverse("main:update_question_solution", kwargs={"name": "python", "post_id": 42}), "/main/d/python/42/solution/")
 
     def test_main_index_route_resolves(self):
         self.assertEqual(resolve("/main/").view_name, "main:index")
 
     def test_questions_route_resolves(self):
         self.assertEqual(resolve("/main/questions/").view_name, "main:questions")
+
+    def test_question_solution_route_resolves(self):
+        self.assertEqual(resolve("/main/d/python/42/solution/").view_name, "main:update_question_solution")
 
     def test_superuser_dashboard_requires_superuser(self):
         user = User.objects.create_user(username="regularuser", password="testpass123")
@@ -163,6 +171,47 @@ class RoutingTests(TestCase):
 
         self.assertContains(response, "Untitled note")
 
+    def test_search_suggestions_returns_matches_for_searches_communities_people_and_posts(self):
+        owner = User.objects.create_user(username="bananafan", password="testpass123")
+        Subthread.objects.create(name="banana-lab", description="All things banana", created_by=owner, members=12)
+        post = Post.objects.create(
+            title="Banana bread recipe",
+            content="A soft loaf.",
+            subthread=Subthread.objects.get(name="banana-lab"),
+            author=owner,
+            upvotes=6,
+        )
+        Tag.objects.create(name="banana")
+        post.tags.add(Tag.objects.get(name="banana"))
+
+        response = self.client.get(reverse("main:search_suggestions"), {"q": "banana"})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["query"], "banana")
+        self.assertTrue(any(item["label"] == "banana" for item in payload["query_suggestions"]))
+        self.assertTrue(any(item["label"] == "Banana bread recipe" for item in payload["query_suggestions"]))
+        self.assertTrue(any(item["name"] == "banana-lab" for item in payload["communities"]))
+        self.assertTrue(any(item["username"] == "bananafan" for item in payload["profiles"]))
+        self.assertTrue(any(item["title"] == "Banana bread recipe" for item in payload["posts"]))
+
+    def test_search_suggestions_respect_scope_and_hide_global_sections(self):
+        owner = User.objects.create_user(username="scopedowner", password="testpass123")
+        scoped_subthread = Subthread.objects.create(name="python", description="Scoped", created_by=owner)
+        Subthread.objects.create(name="python-jobs", description="Other", created_by=owner)
+        post = Post.objects.create(title="Python fixtures", content="pytest ideas", subthread=scoped_subthread, author=owner)
+        tag = Tag.objects.create(name="pytest")
+        post.tags.add(tag)
+
+        response = self.client.get(reverse("main:search_suggestions"), {"q": "py", "scope": "python"})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["communities"], [])
+        self.assertEqual(payload["profiles"], [])
+        self.assertIn("scope=python", payload["search_url"])
+        self.assertTrue(any(item["label"] == "Python fixtures" for item in payload["query_suggestions"]))
+
     def test_home_feed_shows_posts_from_joined_subthreads(self):
         owner = User.objects.create_user(username="feedowner", password="testpass123")
         viewer = User.objects.create_user(username="feedviewer", password="testpass123")
@@ -178,6 +227,36 @@ class RoutingTests(TestCase):
         self.assertContains(response, "Joined post")
         self.assertNotContains(response, "Other post")
 
+    def test_home_feed_prefers_fresher_joined_posts_over_older_high_vote_posts(self):
+        owner = User.objects.create_user(username="homeowner", password="testpass123")
+        viewer = User.objects.create_user(username="homeviewer", password="testpass123")
+        joined_subthread = Subthread.objects.create(name="home-joined", description="Joined", created_by=owner)
+        SubthreadMembership.objects.create(user=viewer, subthread=joined_subthread)
+
+        old_post = Post.objects.create(
+            title="Older highly upvoted post",
+            content="Old content",
+            subthread=joined_subthread,
+            author=owner,
+            upvotes=30,
+        )
+        fresh_post = Post.objects.create(
+            title="Fresh post",
+            content="Fresh content",
+            subthread=joined_subthread,
+            author=owner,
+            upvotes=3,
+        )
+
+        Post.objects.filter(id=old_post.id).update(created_at=timezone.now() - timedelta(days=2))
+        old_post.refresh_from_db()
+
+        self.client.force_login(viewer)
+        response = self.client.get(reverse("main:index"))
+        content = response.content.decode("utf-8")
+
+        self.assertLess(content.index("Fresh post"), content.index("Older highly upvoted post"))
+
     def test_superuser_home_feed_shows_all_posts_without_memberships(self):
         owner = User.objects.create_user(username="feedcreator", password="testpass123")
         superuser = User.objects.create_superuser(username="feedsuper", email="feedsuper@example.com", password="testpass123")
@@ -192,6 +271,62 @@ class RoutingTests(TestCase):
         self.assertContains(response, "First global post")
         self.assertContains(response, "Second global post")
         self.assertFalse(response.context["personalized_home_feed"])
+
+    def test_trending_feed_is_sitewide_excludes_welcome_posts_and_marks_nav_active(self):
+        owner = User.objects.create_user(username="trendowner", password="testpass123")
+        viewer = User.objects.create_user(username="trendviewer", password="testpass123")
+        joined_subthread = Subthread.objects.create(name="trend-joined", description="Joined", created_by=owner)
+        other_subthread = Subthread.objects.create(name="trend-other", description="Other", created_by=owner)
+        SubthreadMembership.objects.create(user=viewer, subthread=joined_subthread)
+
+        hot_post = Post.objects.create(
+            title="Hot sitewide post",
+            content="Momentum",
+            subthread=other_subthread,
+            author=owner,
+            upvotes=5,
+        )
+        Comment.objects.create(post=hot_post, author=viewer, content="First reply")
+        Comment.objects.create(post=hot_post, author=owner, content="Second reply")
+
+        welcome_post = Post.objects.create(
+            title=f"Welcome to d/{other_subthread.name}!",
+            content="Welcome",
+            subthread=other_subthread,
+            author=owner,
+            upvotes=50,
+        )
+
+        self.client.force_login(viewer)
+        response = self.client.get(reverse("main:trending"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Hot sitewide post")
+        self.assertNotContains(response, welcome_post.title)
+        self.assertEqual(response.context["current_nav"], "trending")
+
+    def test_admin_vote_boosts_can_push_post_into_trending_feed(self):
+        owner = User.objects.create_user(username="trendboostowner", password="testpass123")
+        superuser = User.objects.create_superuser(username="trendboostadmin", email="trendboost@example.com", password="testpass123")
+        subthread = Subthread.objects.create(name="trend-boost", description="Boost", created_by=owner)
+        post = Post.objects.create(
+            title="Boosted into trending",
+            content="Demo content",
+            subthread=subthread,
+            author=owner,
+            manual_upvotes=2,
+            upvotes=2,
+        )
+
+        self.client.force_login(superuser)
+        self.client.post(
+            reverse("main:adjust_post_votes", args=[post.id]),
+            {"vote_type": "up", "next": reverse("main:trending")},
+        )
+
+        response = self.client.get(reverse("main:trending"))
+
+        self.assertContains(response, "Boosted into trending")
 
     def test_questions_page_filters_to_question_style_posts(self):
         owner = User.objects.create_user(username="questionowner", password="testpass123")
@@ -265,11 +400,136 @@ class RoutingTests(TestCase):
         answered = Post.objects.create(title="How do signals work?", content="Question body", subthread=subthread, author=owner)
         Comment.objects.create(post=answered, author=owner, content="An answer-like comment")
 
-        response = self.client.get(f"{reverse('main:questions')}?sort=unanswered")
+        response = self.client.get(f"{reverse('main:questions')}?status=unanswered")
 
         self.assertContains(response, unanswered.title)
         self.assertNotContains(response, answered.title)
         self.assertContains(response, "Unanswered Questions")
+
+    def test_questions_page_status_filters_split_open_solved_and_unanswered(self):
+        owner = User.objects.create_user(username="questionstatusowner", password="testpass123")
+        helper = User.objects.create_user(username="questionstatushelper", password="testpass123")
+        subthread = Subthread.objects.create(name="question-status", description="Question status", created_by=owner)
+        unanswered = Post.objects.create(title="What is caching?", content="Question body", subthread=subthread, author=owner, is_question=True)
+        open_question = Post.objects.create(title="How do I test forms?", content="Question body", subthread=subthread, author=owner, is_question=True)
+        solved_question = Post.objects.create(title="How do I mock Redis?", content="Question body", subthread=subthread, author=owner, is_question=True)
+        Comment.objects.create(post=open_question, author=helper, content="Maybe try RequestFactory.")
+        accepted = Comment.objects.create(post=solved_question, author=helper, content="Use a fake client.")
+        solved_question.accepted_comment = accepted
+        solved_question.save(update_fields=["accepted_comment"])
+
+        solved_response = self.client.get(f"{reverse('main:questions')}?status=solved")
+        open_response = self.client.get(f"{reverse('main:questions')}?status=open")
+        unanswered_response = self.client.get(f"{reverse('main:questions')}?status=unanswered")
+
+        self.assertContains(solved_response, solved_question.title)
+        self.assertNotContains(solved_response, open_question.title)
+        self.assertNotContains(solved_response, unanswered.title)
+        self.assertContains(open_response, open_question.title)
+        self.assertNotContains(open_response, solved_question.title)
+        self.assertNotContains(open_response, unanswered.title)
+        self.assertContains(unanswered_response, unanswered.title)
+        self.assertNotContains(unanswered_response, open_question.title)
+        self.assertNotContains(unanswered_response, solved_question.title)
+
+    def test_questions_page_default_prioritizes_unsolved_questions_over_solved(self):
+        owner = User.objects.create_user(username="questionpriorityowner", password="testpass123")
+        helper = User.objects.create_user(username="questionpriorityhelper", password="testpass123")
+        subthread = Subthread.objects.create(name="question-priority", description="Question priority", created_by=owner)
+        open_question = Post.objects.create(title="Open question first", content="Question body", subthread=subthread, author=owner, is_question=True)
+        solved_question = Post.objects.create(title="Solved question later", content="Question body", subthread=subthread, author=owner, is_question=True)
+        accepted = Comment.objects.create(post=solved_question, author=helper, content="Solved answer")
+        solved_question.accepted_comment = accepted
+        solved_question.save(update_fields=["accepted_comment"])
+        Post.objects.filter(id=solved_question.id).update(created_at=timezone.now() + timedelta(minutes=2))
+
+        response = self.client.get(reverse("main:questions"))
+        content = response.content.decode("utf-8")
+
+        self.assertLess(content.index("Open question first"), content.index("Solved question later"))
+
+    def test_question_author_can_mark_comment_as_solved_and_clear_it(self):
+        owner = User.objects.create_user(username="solvedauthor", password="testpass123")
+        helper = User.objects.create_user(username="solvedhelper", password="testpass123")
+        subthread = Subthread.objects.create(name="solved-flow", description="Solved flow", created_by=owner)
+        post = Post.objects.create(title="How do I ship this?", content="Question body", subthread=subthread, author=owner, is_question=True)
+        comment = Comment.objects.create(post=post, author=helper, content="Ship it with tests.")
+
+        self.client.force_login(owner)
+        mark_response = self.client.post(
+            reverse("main:update_question_solution", kwargs={"name": subthread.name, "post_id": post.id}),
+            {"comment_id": comment.id},
+        )
+
+        post.refresh_from_db()
+        self.assertEqual(mark_response.status_code, 302)
+        self.assertEqual(post.accepted_comment, comment)
+        self.assertTrue(mark_response.headers["Location"].endswith("#comments"))
+
+        clear_response = self.client.post(
+            reverse("main:update_question_solution", kwargs={"name": subthread.name, "post_id": post.id}),
+            {"comment_id": comment.id},
+        )
+
+        post.refresh_from_db()
+        self.assertEqual(clear_response.status_code, 302)
+        self.assertIsNone(post.accepted_comment)
+
+    def test_superuser_can_mark_any_question_as_solved(self):
+        owner = User.objects.create_user(username="solvedowner", password="testpass123")
+        helper = User.objects.create_user(username="solvedhelper2", password="testpass123")
+        admin = User.objects.create_superuser(username="solvedadmin", email="solvedadmin@example.com", password="testpass123")
+        subthread = Subthread.objects.create(name="solved-super", description="Solved super", created_by=owner)
+        post = Post.objects.create(title="How do I profile this?", content="Question body", subthread=subthread, author=owner, is_question=True)
+        comment = Comment.objects.create(post=post, author=helper, content="Use cProfile.")
+
+        self.client.force_login(admin)
+        response = self.client.post(
+            reverse("main:update_question_solution", kwargs={"name": subthread.name, "post_id": post.id}),
+            {"comment_id": comment.id},
+        )
+
+        post.refresh_from_db()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(post.accepted_comment, comment)
+
+    def test_non_author_cannot_mark_question_as_solved(self):
+        owner = User.objects.create_user(username="solvedowner2", password="testpass123")
+        viewer = User.objects.create_user(username="solvedviewer", password="testpass123")
+        helper = User.objects.create_user(username="solvedhelper3", password="testpass123")
+        subthread = Subthread.objects.create(name="solved-permissions", description="Solved permissions", created_by=owner)
+        post = Post.objects.create(title="How do decorators work?", content="Question body", subthread=subthread, author=owner, is_question=True)
+        comment = Comment.objects.create(post=post, author=helper, content="Wrap the callable.")
+
+        self.client.force_login(viewer)
+        response = self.client.post(
+            reverse("main:update_question_solution", kwargs={"name": subthread.name, "post_id": post.id}),
+            {"comment_id": comment.id},
+        )
+
+        post.refresh_from_db()
+        self.assertEqual(response.status_code, 403)
+        self.assertIsNone(post.accepted_comment)
+
+    def test_post_detail_promotes_accepted_answer_and_renders_solved_ui(self):
+        owner = User.objects.create_user(username="acceptedowner", password="testpass123")
+        helper = User.objects.create_user(username="acceptedhelper", password="testpass123")
+        subthread = Subthread.objects.create(name="accepted-detail", description="Accepted detail", created_by=owner)
+        post = Post.objects.create(title="How do I debug this?", content="Question body", subthread=subthread, author=owner, is_question=True)
+        first_root = Comment.objects.create(post=post, author=helper, content="Root comment that should move down.")
+        accepted_parent = Comment.objects.create(post=post, author=owner, content="Parent thread comment.")
+        accepted_reply = Comment.objects.create(post=post, author=helper, content="Accepted reply should be pinned first.", parent=accepted_parent)
+        post.accepted_comment = accepted_reply
+        post.save(update_fields=["accepted_comment"])
+
+        self.client.force_login(owner)
+        response = self.client.get(reverse("main:post_detail", kwargs={"name": subthread.name, "post_id": post.id}))
+        content = response.content.decode("utf-8")
+
+        self.assertContains(response, "Accepted answer")
+        self.assertContains(response, "Accepted answer pinned below.")
+        self.assertContains(response, "Unmark solved")
+        self.assertLess(content.index("Accepted reply should be pinned first."), content.index("Root comment that should move down."))
 
     def test_create_subthread_auto_joins_creator(self):
         user = User.objects.create_user(username="builder", password="testpass123")

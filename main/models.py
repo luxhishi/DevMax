@@ -71,6 +71,13 @@ class Post(models.Model):
     manual_downvotes = models.IntegerField(default=0)
     upvotes = models.IntegerField(default=0)
     downvotes = models.IntegerField(default=0)
+    accepted_comment = models.ForeignKey(
+        "Comment",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="accepted_for_posts",
+    )
 
     def __str__(self):
         return self.title

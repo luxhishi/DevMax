@@ -1,4 +1,4 @@
-<article class="{% if is_root %}comment-card{% else %}reply-card{% endif %}">
+<article class="{% if is_root %}comment-card{% else %}reply-card{% endif %}{% if comment.is_accepted_answer %} comment-card-accepted{% endif %}"{% if comment.is_accepted_answer %} data-accepted-answer="true"{% endif %}>
   <div class="vote-rail">
     {% if user.is_authenticated %}
     <form method="post" action="{% url 'main:vote_comment' comment.id %}" class="vote-form">
@@ -57,6 +57,9 @@
       </a>
       <span>&bull;</span>
       <span>{{ comment.time_ago }}</span>
+      {% if comment.is_accepted_answer %}
+      <span class="comment-solution-badge">Accepted answer</span>
+      {% endif %}
     </div>
 
     {% if comment.achievement %}
@@ -80,6 +83,18 @@
         >
           Reply
         </button>
+        {% if comment.can_mark_as_solution %}
+        <form method="post" action="{% url 'main:update_question_solution' post.subthread post.id %}" class="comment-inline-form">
+          {% csrf_token %}
+          <input type="hidden" name="comment_id" value="{{ comment.id }}">
+          {% if return_to_subthread %}
+          <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+          {% endif %}
+          <button type="submit" class="comment-admin-action{% if comment.is_accepted_answer %} comment-admin-action-success{% endif %}">
+            {% if comment.is_accepted_answer %}Unmark solved{% else %}Mark as solved{% endif %}
+          </button>
+        </form>
+        {% endif %}
         {% if comment.can_boost_votes %}
         <form method="post" action="{% url 'main:adjust_comment_votes' comment.id %}" class="comment-inline-form">
           {% csrf_token %}

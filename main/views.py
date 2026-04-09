@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -6,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -20,6 +21,15 @@ from .reputation import ACHIEVEMENT_LEVELS, achievement_for_upvotes, build_user_
 PROFILE_PHOTO_MAX_BYTES = 5 * 1024 * 1024
 PROFILE_PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 PROFILE_BIO_MAX_LENGTH = 280
+HOME_FEED_UPVOTE_MINUTES = 8
+HOME_FEED_COMMENT_MINUTES = 12
+TRENDING_FEED_WINDOW_DAYS = 7
+TRENDING_MIN_UPVOTES = 3
+TRENDING_MIN_COMMENTS = 2
+TRENDING_VOTE_WEIGHT = 4
+TRENDING_COMMENT_WEIGHT = 5
+TRENDING_DECAY_OFFSET_HOURS = 2
+TRENDING_DECAY_POWER = 1.35
 
 
 def _build_post_detail_url(post_id, subthread_name, return_to_subthread=None, anchor=None, open_comment=False):
@@ -69,10 +79,30 @@ def _build_search_url(query="", tab=None, scope_name=None):
     return url
 
 
-def _build_questions_url(sort=None):
+def _append_search_suggestion(suggestions, seen_labels, label, scope_name=None):
+    cleaned_label = label.strip()
+    normalized_label = cleaned_label.lower()
+    if not cleaned_label or normalized_label in seen_labels:
+        return
+
+    seen_labels.add(normalized_label)
+    suggestions.append(
+        {
+            "label": cleaned_label,
+            "url": _build_search_url(query=cleaned_label, scope_name=scope_name or None),
+        }
+    )
+
+
+def _build_questions_url(sort=None, status=None):
+    params = {}
+    if sort and sort != "newest":
+        params["sort"] = sort
+    if status and status != "all":
+        params["status"] = status
     url = reverse("main:questions")
-    if sort:
-        url = f"{url}?{urlencode({'sort': sort})}"
+    if params:
+        url = f"{url}?{urlencode(params)}"
     return url
 
 
@@ -221,6 +251,8 @@ def _serialize_post(post, return_to_subthread=None, current_user_vote="", vote_r
     comment_total = getattr(post, "comment_total", None)
     if comment_total is None:
         comment_total = post.comments.count()
+    is_question = _is_question_post(post)
+    question_status = _question_status(post, comment_total=comment_total) if is_question else ""
 
     return {
         "id": post.id,
@@ -233,6 +265,9 @@ def _serialize_post(post, return_to_subthread=None, current_user_vote="", vote_r
         "tags": _serialize_post_tags(post, scope_name=tag_scope_name),
         "author": post.author.username,
         "achievement": achievement_for_upvotes(post.upvotes),
+        "is_question": is_question,
+        "is_solved": question_status == "solved",
+        "question_status": question_status,
         "detail_url": _build_post_detail_url(post.id, post.subthread.name, return_to_subthread=return_to_subthread),
         "comments_url": _build_post_detail_url(
             post.id,
@@ -256,6 +291,43 @@ def _serialize_comment(comment):
         "achievement": achievement_for_upvotes(comment.upvotes),
         "detail_url": _build_post_detail_url(comment.post.id, comment.post.subthread.name, anchor="comments"),
     }
+
+
+def _annotate_post_comment_totals(queryset):
+    return queryset.annotate(comment_total=Count("comments", distinct=True))
+
+
+def _is_welcome_post(post):
+    return post.title == f"Welcome to d/{post.subthread.name}!"
+
+
+def _home_feed_rank_value(post):
+    comment_total = getattr(post, "comment_total", 0)
+    boost_minutes = (post.upvotes * HOME_FEED_UPVOTE_MINUTES) + (comment_total * HOME_FEED_COMMENT_MINUTES)
+    return post.created_at + timedelta(minutes=boost_minutes)
+
+
+def _trending_feed_score(post, now=None):
+    now = now or timezone.now()
+    age_delta = now - post.created_at
+    age_hours = max(age_delta.total_seconds() / 3600, 0)
+    comment_total = getattr(post, "comment_total", 0)
+    weighted_activity = (post.upvotes * TRENDING_VOTE_WEIGHT) + (comment_total * TRENDING_COMMENT_WEIGHT)
+    return weighted_activity / ((age_hours + TRENDING_DECAY_OFFSET_HOURS) ** TRENDING_DECAY_POWER)
+
+
+def _serialize_feed_posts(request_user, posts, vote_return_url, return_to_subthread=None, tag_scope_name=None):
+    vote_map = _user_post_vote_map(request_user, posts)
+    return [
+        _serialize_post(
+            post,
+            return_to_subthread=return_to_subthread,
+            current_user_vote=vote_map.get(post.id, ""),
+            vote_return_url=vote_return_url,
+            tag_scope_name=tag_scope_name or "",
+        )
+        for post in posts
+    ]
 
 
 def _fake_posts():
@@ -321,6 +393,23 @@ def _is_question_post(post):
     return "?" in title or "?" in content or title.startswith(question_prefixes)
 
 
+def _question_status(post, comment_total=None):
+    if not _is_question_post(post):
+        return ""
+
+    if getattr(post, "accepted_comment_id", None):
+        return "solved"
+
+    if comment_total is None:
+        comment_total = getattr(post, "comment_total", None)
+    if comment_total is None:
+        comment_total = post.comments.count()
+
+    if comment_total == 0:
+        return "unanswered"
+    return "open"
+
+
 def _sync_subthread_members(subthread):
     member_total = SubthreadMembership.objects.filter(subthread=subthread).count()
     if subthread.members != member_total:
@@ -348,6 +437,10 @@ def _user_can_manage_comment(user, comment):
 
 def _user_can_manage_subthread(user, subthread):
     return user.is_authenticated and (user == subthread.created_by or user.is_superuser)
+
+
+def _user_can_mark_question_solved(user, post):
+    return user.is_authenticated and _is_question_post(post) and (user == post.author or user.is_superuser)
 
 
 def _log_admin_action(actor, action_type, target_type, target_display, detail="", target_url=""):
@@ -487,7 +580,7 @@ def _build_comment_tree(post, user):
         )
 
     comment_lookup = {}
-    roots = []
+    can_mark_question_solved = _user_can_mark_question_solved(user, post)
     for comment in comments:
         comment.children = []
         comment.current_user_vote = vote_map.get(comment.id, "")
@@ -497,14 +590,26 @@ def _build_comment_tree(post, user):
         comment.can_manage = _user_can_manage_comment(user, comment)
         comment.can_boost_votes = user.is_authenticated and user.is_superuser
         comment.achievement = achievement_for_upvotes(comment.upvotes)
+        comment.is_accepted_answer = comment.id == getattr(post, "accepted_comment_id", None)
+        comment.can_mark_as_solution = can_mark_question_solved
         comment_lookup[comment.id] = comment
 
+    roots = []
     for comment in comments:
         parent = comment_lookup.get(comment.parent_id)
         if parent is None:
             roots.append(comment)
         else:
             parent.children.append(comment)
+
+    accepted_comment = comment_lookup.get(getattr(post, "accepted_comment_id", None))
+    if accepted_comment is not None:
+        accepted_parent = comment_lookup.get(accepted_comment.parent_id)
+        if accepted_parent is not None:
+            accepted_parent.children = [
+                child for child in accepted_parent.children if child.id != accepted_comment.id
+            ]
+        roots = [accepted_comment, *[root for root in roots if root.id != accepted_comment.id]]
 
     def annotate_reply_counts(node):
         descendant_count = 0
@@ -534,11 +639,10 @@ def _user_post_vote_map(user, posts):
 
 
 def index(request):
-    base_post_qs = (
+    base_post_qs = _annotate_post_comment_totals(
         Post.objects.all()
         .select_related("subthread", "author")
         .prefetch_related("tags")
-        .order_by("-upvotes", "-created_at")
     )
     personalized_home_feed = request.user.is_authenticated and not request.user.is_superuser
     feed_empty_title = "No posts yet."
@@ -557,18 +661,9 @@ def index(request):
         post_qs = base_post_qs
 
     post_list = list(post_qs)
+    post_list.sort(key=lambda post: (_home_feed_rank_value(post), post.created_at), reverse=True)
     if post_list:
-        vote_map = _user_post_vote_map(request.user, post_list)
-        index_url = reverse("main:index")
-        posts = [
-            _serialize_post(
-                post,
-                current_user_vote=vote_map.get(post.id, ""),
-                vote_return_url=index_url,
-                tag_scope_name="",
-            )
-            for post in post_list
-        ]
+        posts = _serialize_feed_posts(request.user, post_list, vote_return_url=reverse("main:index"))
     else:
         posts = _fake_posts() if not personalized_home_feed and not base_post_qs.exists() else []
 
@@ -584,64 +679,126 @@ def index(request):
 
 
 def trending(request):
-    return redirect("main:index")
+    now = timezone.now()
+    trend_window_start = now - timedelta(days=TRENDING_FEED_WINDOW_DAYS)
+    base_post_qs = _annotate_post_comment_totals(
+        Post.objects.filter(created_at__gte=trend_window_start)
+        .select_related("subthread", "author")
+        .prefetch_related("tags")
+    )
+    candidate_posts = [
+        post
+        for post in base_post_qs
+        if not _is_welcome_post(post)
+        and (post.upvotes >= TRENDING_MIN_UPVOTES or getattr(post, "comment_total", 0) >= TRENDING_MIN_COMMENTS)
+    ]
+    candidate_posts.sort(
+        key=lambda post: (_trending_feed_score(post, now=now), post.upvotes, getattr(post, "comment_total", 0), post.created_at),
+        reverse=True,
+    )
+
+    context = {
+        "posts": _serialize_feed_posts(request.user, candidate_posts, vote_return_url=reverse("main:trending")) if candidate_posts else [],
+        "feed_empty_title": "No trending posts yet.",
+        "feed_empty_hint": "When posts start picking up fresh votes or replies across DevMax, they'll show up here.",
+        "current_nav": "trending",
+        **_sidebar_context(request),
+    }
+    return render(request, "index.html", context)
 
 
 def questions(request):
     requested_sort = request.GET.get("sort", "newest").strip().lower()
+    requested_status = request.GET.get("status", "all").strip().lower()
+    if requested_sort == "unanswered" and "status" not in request.GET:
+        requested_sort = "newest"
+        requested_status = "unanswered"
     sort_options = {
         "newest": "Newest",
         "discussed": "Most Discussed",
         "upvoted": "Most Upvoted",
+    }
+    status_options = {
+        "all": "All",
+        "open": "Open",
+        "solved": "Solved",
         "unanswered": "Unanswered",
     }
     active_sort = requested_sort if requested_sort in sort_options else "newest"
+    active_status = requested_status if requested_status in status_options else "all"
 
     question_posts = list(
-        Post.objects.all().select_related("subthread", "author").prefetch_related("tags")
+        _annotate_post_comment_totals(
+            Post.objects.all().select_related("subthread", "author", "accepted_comment").prefetch_related("tags")
+        )
     )
     question_posts = [post for post in question_posts if _is_question_post(post)]
 
-    for post in question_posts:
-        post.comment_total = post.comments.count()
+    if active_status == "solved":
+        question_posts = [post for post in question_posts if post.accepted_comment_id]
+    elif active_status == "open":
+        question_posts = [post for post in question_posts if post.comment_total > 0 and not post.accepted_comment_id]
+    elif active_status == "unanswered":
+        question_posts = [post for post in question_posts if post.comment_total == 0]
 
     if active_sort == "discussed":
         question_posts.sort(key=lambda post: (post.comment_total, post.created_at), reverse=True)
     elif active_sort == "upvoted":
         question_posts.sort(key=lambda post: (post.upvotes, post.created_at), reverse=True)
-    elif active_sort == "unanswered":
-        question_posts = [post for post in question_posts if post.comment_total == 0]
-        question_posts.sort(key=lambda post: post.created_at, reverse=True)
     else:
         question_posts.sort(key=lambda post: post.created_at, reverse=True)
 
-    vote_map = _user_post_vote_map(request.user, question_posts)
-    questions_url = request.get_full_path()
-    serialized_questions = [
-            _serialize_post(
-                post,
-                current_user_vote=vote_map.get(post.id, ""),
-                vote_return_url=questions_url,
-                tag_scope_name="",
-            )
-            for post in question_posts
-    ]
+    if active_status == "all":
+        unsolved_posts = [post for post in question_posts if not post.accepted_comment_id]
+        solved_posts = [post for post in question_posts if post.accepted_comment_id]
+        question_posts = [*unsolved_posts, *solved_posts]
+
+    serialized_questions = _serialize_feed_posts(
+        request.user,
+        question_posts,
+        vote_return_url=request.get_full_path(),
+    )
 
     question_sort_tabs = [
         {
             "id": sort_id,
             "label": label,
-            "url": _build_questions_url(sort=sort_id),
+            "url": _build_questions_url(sort=sort_id, status=active_status),
             "active": active_sort == sort_id,
         }
         for sort_id, label in sort_options.items()
     ]
+    question_status_tabs = [
+        {
+            "id": status_id,
+            "label": label,
+            "url": _build_questions_url(sort=active_sort, status=status_id),
+            "active": active_status == status_id,
+        }
+        for status_id, label in status_options.items()
+    ]
+
+    question_feed_title = {
+        "solved": "Solved Questions",
+        "open": "Open Questions",
+        "unanswered": "Unanswered Questions",
+    }.get(
+        active_status,
+        {
+            "discussed": "Most Discussed Questions",
+            "upvoted": "Most Upvoted Questions",
+            "newest": "Newest Questions",
+        }[active_sort],
+    )
 
     context = {
         "questions": serialized_questions,
         "question_total": len(question_posts),
         "active_question_sort": active_sort,
+        "active_question_status": active_status,
         "question_sort_tabs": question_sort_tabs,
+        "question_status_tabs": question_status_tabs,
+        "question_feed_title": question_feed_title,
         "available_subthreads": list(Subthread.objects.order_by("name")) if request.user.is_authenticated else [],
         "current_nav": "questions",
         **_sidebar_context(request),
@@ -861,6 +1018,108 @@ def search(request):
     return render(request, "search_results.html", context)
 
 
+def search_suggestions(request):
+    query = request.GET.get("q", "").strip()
+    scope_name = request.GET.get("scope", "").strip().lower()
+    scope_subthread = Subthread.objects.filter(name=scope_name).first() if scope_name else None
+    search_scope_name = scope_subthread.name if scope_subthread else ""
+    profile_query = _normalize_profile_query(query)
+
+    if len(query) < 2:
+        return JsonResponse(
+            {
+                "query": query,
+                "search_url": _build_search_url(query=query, scope_name=search_scope_name or None),
+                "query_suggestions": [],
+                "communities": [],
+                "profiles": [],
+                "posts": [],
+            }
+        )
+
+    if scope_subthread:
+        post_qs = (
+            Post.objects.filter(subthread=scope_subthread)
+            .select_related("subthread")
+            .filter(Q(title__icontains=query) | Q(content__icontains=query) | Q(tags__name__icontains=query))
+            .distinct()
+            .order_by("-upvotes", "-created_at")
+        )
+        tag_qs = (
+            Tag.objects.filter(posts__subthread=scope_subthread, name__icontains=query)
+            .distinct()
+            .order_by("name")
+        )
+        community_qs = Subthread.objects.none()
+        profile_qs = User.objects.none()
+    else:
+        post_qs = (
+            Post.objects.select_related("subthread")
+            .filter(
+                Q(title__icontains=query)
+                | Q(content__icontains=query)
+                | Q(subthread__name__icontains=query)
+                | Q(tags__name__icontains=query)
+            )
+            .distinct()
+            .order_by("-upvotes", "-created_at")
+        )
+        tag_qs = Tag.objects.filter(name__icontains=query).order_by("name")
+        community_qs = Subthread.objects.filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        ).order_by("-members", "name")
+        profile_qs = User.objects.filter(username__icontains=profile_query).order_by("username") if profile_query else User.objects.none()
+
+    query_suggestions = []
+    seen_suggestions = set()
+    _append_search_suggestion(query_suggestions, seen_suggestions, query, scope_name=search_scope_name)
+
+    for tag_name in tag_qs.values_list("name", flat=True)[:4]:
+        _append_search_suggestion(query_suggestions, seen_suggestions, tag_name, scope_name=search_scope_name)
+
+    for post_title in post_qs.values_list("title", flat=True)[:4]:
+        _append_search_suggestion(query_suggestions, seen_suggestions, post_title, scope_name=search_scope_name)
+
+    communities = [
+        {
+            "name": subthread.name,
+            "description": subthread.description,
+            "meta": "1 member" if subthread.members == 1 else f"{subthread.members} members",
+            "url": reverse("main:subthread_detail", kwargs={"name": subthread.name}),
+        }
+        for subthread in community_qs[:5]
+    ]
+
+    profiles = [
+        {
+            "username": profile.username,
+            "meta": f"Joined {profile.date_joined.strftime('%b %Y')}",
+            "url": _build_profile_url(profile.username),
+        }
+        for profile in profile_qs[:4]
+    ]
+
+    posts = [
+        {
+            "title": post.title,
+            "subthread": post.subthread.name,
+            "url": _build_post_detail_url(post.id, post.subthread.name, return_to_subthread=search_scope_name or None),
+        }
+        for post in post_qs[:4]
+    ]
+
+    return JsonResponse(
+        {
+            "query": query,
+            "search_url": _build_search_url(query=query, scope_name=search_scope_name or None),
+            "query_suggestions": query_suggestions[:5],
+            "communities": communities,
+            "profiles": profiles,
+            "posts": posts,
+        }
+    )
+
+
 def post_detail(request, name, post_id):
     return_to_subthread = request.GET.get("from_subthread", "").strip()
     open_comment_modal = request.user.is_authenticated and request.GET.get("open_comment") == "1"
@@ -871,7 +1130,7 @@ def post_detail(request, name, post_id):
         back_url = reverse("main:index")
 
     try:
-        post = Post.objects.select_related("subthread", "author").prefetch_related("tags").get(id=post_id)
+        post = Post.objects.select_related("subthread", "author", "accepted_comment").prefetch_related("tags").get(id=post_id)
         if post.subthread.name != name:
             return redirect(_build_post_detail_url(post.id, post.subthread.name, return_to_subthread=return_to_subthread))
         current_user_vote = ""
@@ -884,19 +1143,16 @@ def post_detail(request, name, post_id):
             )
         comments, total_comment_count = _build_comment_tree(post, request.user)
 
-        post_data = {
-            "id": post.id,
-            "title": post.title,
-            "subthread": post.subthread.name,
-            "author": post.author.username,
-            "upvotes": post.upvotes,
-            "downvotes": post.downvotes,
-            "comments": total_comment_count,
-            "timeAgo": _time_ago(post.created_at),
-            "content": post.content,
-            "tags": _serialize_post_tags(post, scope_name=post.subthread.name),
-            "achievement": achievement_for_upvotes(post.upvotes),
-        }
+        post.comment_total = total_comment_count
+        post_data = _serialize_post(
+            post,
+            return_to_subthread=return_to_subthread or None,
+            current_user_vote=current_user_vote,
+            vote_return_url=request.get_full_path(),
+            tag_scope_name=post.subthread.name,
+        )
+        post_data["downvotes"] = post.downvotes
+        post_data["accepted_comment_id"] = post.accepted_comment_id
         return render(
             request,
             "post_detail.html",
@@ -925,6 +1181,10 @@ def post_detail(request, name, post_id):
                 "upvotes": 1234,
                 "downvotes": 10,
                 "comments": 89,
+                "is_question": False,
+                "is_solved": False,
+                "question_status": "",
+                "accepted_comment_id": None,
             },
             2: {
                 "id": 2,
@@ -937,6 +1197,10 @@ def post_detail(request, name, post_id):
                 "upvotes": 987,
                 "downvotes": 5,
                 "comments": 54,
+                "is_question": False,
+                "is_solved": False,
+                "question_status": "",
+                "accepted_comment_id": None,
             },
         }
         post = fallback_posts.get(int(post_id))
@@ -972,6 +1236,42 @@ def post_comment(request, name, post_id):
         parent = get_object_or_404(Comment, id=parent_id) if parent_id else None
         Comment.objects.create(post=post, author=request.user, content=content, parent=parent)
     return _post_detail_redirect(post_id, return_to_subthread=return_to_subthread)
+
+
+@login_required
+@require_POST
+def update_question_solution(request, name, post_id):
+    post = get_object_or_404(Post.objects.select_related("subthread", "author"), id=post_id)
+    if post.subthread.name != name:
+        return redirect(_build_post_detail_url(post.id, post.subthread.name))
+
+    if not _is_question_post(post):
+        return HttpResponseForbidden("Only question posts can be marked as solved.")
+
+    if not _user_can_mark_question_solved(request.user, post):
+        return HttpResponseForbidden("Only the question author or a superuser can mark a solution.")
+
+    return_to_subthread = request.POST.get("return_to_subthread", "").strip()
+    comment_id = request.POST.get("comment_id", "").strip()
+    comment = get_object_or_404(Comment.objects.select_related("post"), id=comment_id, post=post)
+
+    if post.accepted_comment_id == comment.id:
+        post.accepted_comment = None
+        post.save(update_fields=["accepted_comment"])
+        messages.success(request, "Accepted answer removed.")
+    else:
+        post.accepted_comment = comment
+        post.save(update_fields=["accepted_comment"])
+        messages.success(request, "Question marked as solved.")
+
+    return redirect(
+        _build_post_detail_url(
+            post.id,
+            post.subthread.name,
+            return_to_subthread=return_to_subthread or None,
+            anchor="comments",
+        )
+    )
 
 
 @login_required
