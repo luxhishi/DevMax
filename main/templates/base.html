@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <title>DevMax</title>
-  <link rel="icon" type="image/png" href="{% static 'images/site-icon.png' %}">
-  <link rel="apple-touch-icon" href="{% static 'images/site-icon.png' %}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/site-icon.png' %}?v={{ site_icon_version }}">
+  <link rel="shortcut icon" type="image/png" href="{% static 'images/site-icon.png' %}?v={{ site_icon_version }}">
+  <link rel="apple-touch-icon" href="{% static 'images/site-icon.png' %}?v={{ site_icon_version }}">
 
   {% tailwind_css %}
 

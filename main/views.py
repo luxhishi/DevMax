@@ -1490,12 +1490,9 @@ def signup_view(request):
         password2 = request.POST["password2"]
         if password1 == password2:
             try:
-                User.objects.create_user(username=username, email=email, password=password1)
-                return render(
-                    request,
-                    "registration/signup.html",
-                    {"success": f"Account created for {username}! Please log in."},
-                )
+                user = User.objects.create_user(username=username, email=email, password=password1)
+                login(request, user)
+                return redirect("main:index")
             except IntegrityError:
                 return render(request, "registration/signup.html", {"error": "Username already exists."})
         return render(request, "registration/signup.html", {"error": "Passwords do not match."})

@@ -76,9 +76,39 @@ class RoutingTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers["Location"], reverse("main:user_profile", args=[user.username]))
 
+    def test_signup_creates_user_logs_them_in_and_redirects_home(self):
+        response = self.client.post(
+            reverse("main:signup"),
+            {
+                "email": "newuser@example.com",
+                "username": "newuser",
+                "password1": "testpass123",
+                "password2": "testpass123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], reverse("main:index"))
+        self.assertTrue(User.objects.filter(username="newuser", email="newuser@example.com").exists())
+        self.assertEqual(int(self.client.session["_auth_user_id"]), User.objects.get(username="newuser").id)
+
     def test_anonymous_pages_default_to_light_mode(self):
         response = self.client.get(reverse("main:index"))
         self.assertContains(response, 'data-display-mode="light"')
+
+    def test_base_template_includes_versioned_site_icon_links(self):
+        response = self.client.get(reverse("main:index"))
+
+        self.assertContains(response, 'rel="icon" type="image/png" sizes="32x32"')
+        self.assertContains(response, 'rel="shortcut icon" type="image/png"')
+        self.assertContains(response, "site-icon.png?v=")
+
+    def test_login_page_shows_signup_prompt_for_new_users(self):
+        response = self.client.get(reverse("main:login"))
+
+        self.assertContains(response, "New to DevMax?")
+        self.assertContains(response, "Sign up here")
+        self.assertContains(response, reverse("main:signup"))
 
     def test_display_mode_update_is_saved_per_user(self):
         user = User.objects.create_user(username="carol", password="testpass123")
