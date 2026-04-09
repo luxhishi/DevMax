@@ -14,19 +14,9 @@
       <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p class="text-xs font-semibold uppercase tracking-widest text-gray-500">Questions</p>
-          <h1 class="mt-3 text-3xl font-bold text-gray-900">
-            {% if active_question_sort == 'unanswered' %}
-              Unanswered Questions
-            {% elif active_question_sort == 'upvoted' %}
-              Most Upvoted Questions
-            {% elif active_question_sort == 'discussed' %}
-              Most Discussed Questions
-            {% else %}
-              Newest Questions
-            {% endif %}
-          </h1>
+          <h1 class="mt-3 text-3xl font-bold text-gray-900">{{ question_feed_title }}</h1>
           <p class="mt-3 text-sm text-gray-500">
-            Browse question-style posts across DevMax and jump into the conversations that need answers.
+            Browse question-style posts across DevMax, surface accepted answers faster, and jump into the conversations that still need help.
           </p>
         </div>
         <div class="question-hero-actions sm:justify-end">
@@ -52,12 +42,26 @@
     </section>
 
     <section class="landing-panel p-4 sm:p-5">
-      <div class="search-tab-row">
-        {% for tab in question_sort_tabs %}
-          <a href="{{ tab.url }}" class="search-tab{% if tab.active %} search-tab-active{% endif %}">
-            <span>{{ tab.label }}</span>
-          </a>
-        {% endfor %}
+      <div class="question-filter-toolbar">
+        <span class="question-filter-label">Sort</span>
+        <div class="search-tab-row">
+          {% for tab in question_sort_tabs %}
+            <a href="{{ tab.url }}" class="search-tab{% if tab.active %} search-tab-active{% endif %}">
+              <span>{{ tab.label }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="question-filter-toolbar question-filter-toolbar-secondary">
+        <span class="question-filter-label">Status</span>
+        <div class="question-status-tab-row">
+          {% for tab in question_status_tabs %}
+            <a href="{{ tab.url }}" class="question-status-tab{% if tab.active %} question-status-tab-active{% endif %}">
+              <span>{{ tab.label }}</span>
+            </a>
+          {% endfor %}
+        </div>
       </div>
     </section>
 
@@ -85,12 +89,27 @@
             <div class="question-main">
               <div class="question-title-row">
                 <h2 class="question-title">{{ question.title }}</h2>
-                {% if question.achievement %}
-                  <div class="question-achievement-chip">
-                    {% include "components/achievement_chip.html" with achievement=question.achievement %}
-                  </div>
-                {% endif %}
+                <div class="question-title-badges">
+                  <span class="question-status-pill question-status-pill-{{ question.question_status }}">
+                    {% if question.question_status == 'solved' %}
+                      Solved
+                    {% elif question.question_status == 'open' %}
+                      Open
+                    {% else %}
+                      Unanswered
+                    {% endif %}
+                  </span>
+                  {% if question.achievement %}
+                    <div class="question-achievement-chip">
+                      {% include "components/achievement_chip.html" with achievement=question.achievement %}
+                    </div>
+                  {% endif %}
+                </div>
               </div>
+
+              {% if question.is_solved %}
+                <p class="question-status-summary">Accepted answer pinned in the thread.</p>
+              {% endif %}
 
               <p class="question-excerpt">{{ question.content|truncatechars:220 }}</p>
 
