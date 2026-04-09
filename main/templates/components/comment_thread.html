@@ -1,0 +1,182 @@
+<article class="{% if is_root %}comment-card{% else %}reply-card{% endif %}">
+  <div class="vote-rail">
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'main:vote_comment' comment.id %}" class="vote-form">
+      {% csrf_token %}
+      <input type="hidden" name="vote_type" value="up">
+      {% if return_to_subthread %}
+      <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+      {% endif %}
+      <button type="submit" class="vote-button {% if comment.current_user_vote == 'up' %}vote-up-active{% else %}vote-neutral{% endif %}" aria-label="Upvote comment">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15l6-6 6 6"/>
+        </svg>
+      </button>
+    </form>
+    {% else %}
+    <span class="vote-neutral">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15l6-6 6 6"/>
+      </svg>
+    </span>
+    {% endif %}
+
+    <span class="vote-score">{{ comment.upvotes }}</span>
+
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'main:vote_comment' comment.id %}" class="vote-form">
+      {% csrf_token %}
+      <input type="hidden" name="vote_type" value="down">
+      {% if return_to_subthread %}
+      <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+      {% endif %}
+      <button type="submit" class="vote-button vote-down {% if comment.current_user_vote == 'down' %}vote-down-active{% else %}vote-neutral{% endif %}" aria-label="Downvote comment">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9l-6 6-6-6"/>
+        </svg>
+      </button>
+    </form>
+    {% else %}
+    <span class="vote-neutral vote-down">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9l-6 6-6-6"/>
+      </svg>
+    </span>
+    {% endif %}
+  </div>
+
+  <div class="comment-main">
+    <div class="comment-meta">
+      <a
+        href="{% url 'main:user_profile' comment.author.username %}"
+        class="comment-author hover:underline"
+        data-user-hover-card
+        data-user-hover-url="{% url 'main:user_hover_card' comment.author.username %}"
+      >
+        {{ comment.author.username }}
+      </a>
+      <span>&bull;</span>
+      <span>{{ comment.time_ago }}</span>
+    </div>
+
+    {% if comment.achievement %}
+      <div class="comment-achievement-row">
+        {% include "components/achievement_chip.html" with achievement=comment.achievement %}
+      </div>
+    {% endif %}
+
+    <div class="comment-body">
+      <div class="comment-text post-rich-content">{{ comment.content|render_post_content }}</div>
+
+      {% if user.is_authenticated %}
+      <div class="comment-actions-row">
+        <button
+          type="button"
+          class="comment-reply-toggle"
+          data-reply-toggle
+          data-target="reply-form-{{ comment.id }}"
+          aria-expanded="false"
+          aria-controls="reply-form-{{ comment.id }}"
+        >
+          Reply
+        </button>
+        {% if comment.can_boost_votes %}
+        <form method="post" action="{% url 'main:adjust_comment_votes' comment.id %}" class="comment-inline-form">
+          {% csrf_token %}
+          <input type="hidden" name="vote_type" value="up">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="comment-admin-action">+1 Upvote</button>
+        </form>
+        <form method="post" action="{% url 'main:adjust_comment_votes' comment.id %}" class="comment-inline-form">
+          {% csrf_token %}
+          <input type="hidden" name="vote_type" value="down">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="comment-admin-action comment-admin-action-danger">+1 Downvote</button>
+        </form>
+        {% endif %}
+        {% if comment.can_manage %}
+        <form method="post" action="{% url 'main:delete_comment' comment.id %}" class="comment-inline-form" onsubmit="return window.confirm('Delete this comment?');">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="comment-admin-action comment-admin-action-danger">Delete</button>
+        </form>
+        {% endif %}
+      </div>
+
+      <form
+        id="reply-form-{{ comment.id }}"
+        method="post"
+        action="{% url 'main:post_comment' post.subthread post.id %}"
+        class="comment-form-inline reply-form-shell"
+        hidden
+      >
+        {% csrf_token %}
+        <input type="hidden" name="parent_id" value="{{ comment.id }}">
+        {% if return_to_subthread %}
+        <input type="hidden" name="return_to_subthread" value="{{ return_to_subthread }}">
+        {% endif %}
+        <div class="compose-toolbar">
+          <div class="compose-tool-group">
+            <button
+              type="button"
+              class="compose-tool"
+              data-code-insert="inline"
+              data-target="reply-content-{{ comment.id }}"
+              aria-label="Insert inline code"
+              title="Inline code"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8l-4 4 4 4M15 8l4 4-4 4"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="compose-tool"
+              data-code-insert="block"
+              data-target="reply-content-{{ comment.id }}"
+              aria-label="Insert code block"
+              title="Code block"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16"/>
+              </svg>
+            </button>
+          </div>
+          <p class="compose-toolbar-note">Add inline code or a multi-line code block.</p>
+        </div>
+        <textarea id="reply-content-{{ comment.id }}" name="content" placeholder="Reply to u/{{ comment.author.username }}" class="discussion-textarea" required></textarea>
+        <div class="discussion-actions">
+          <button type="submit" class="pill-button-secondary">Reply</button>
+        </div>
+      </form>
+      {% endif %}
+
+      {% if comment.children %}
+      <div class="reply-thread" data-comment-thread>
+        <div class="thread-collapse-rail">
+          <div class="thread-toggle-meta">
+            <button
+              type="button"
+              class="thread-toggle"
+              data-thread-toggle
+              aria-expanded="true"
+              aria-controls="comment-replies-{{ comment.id }}"
+              aria-label="Collapse replies"
+            >
+              <span data-thread-symbol>-</span>
+            </button>
+            <span class="thread-toggle-count">{{ comment.reply_count_label }}</span>
+          </div>
+          <span class="thread-toggle-line" aria-hidden="true"></span>
+        </div>
+
+        <div id="comment-replies-{{ comment.id }}" class="reply-stack" data-thread-body>
+          {% for child in comment.children %}
+          {% include "components/comment_thread.html" with comment=child is_root=False %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</article>

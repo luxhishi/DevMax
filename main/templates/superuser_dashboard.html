@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="app-shell">
+  <div class="landing-grid">
+    <aside class="hidden lg:block rail-layer">
+      {% include "components/sidebar.html" %}
+    </aside>
+
+    <div class="min-w-0 space-y-4">
+      <section class="landing-panel p-6 sm:p-7 moderation-hero">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="dashboard-kicker">Superuser Dashboard</p>
+            <h1 class="mt-3 text-3xl font-bold text-gray-900">Moderation overview</h1>
+            <p class="mt-3 max-w-3xl text-sm text-gray-500">
+              Monitor community health, jump into fresh content, and review the latest moderation actions from one place.
+            </p>
+          </div>
+          <div class="superuser-badge">Admin Console</div>
+        </div>
+
+        <div class="dashboard-stat-grid">
+          <div class="dashboard-stat-card">
+            <span class="dashboard-stat-label">Users</span>
+            <span class="dashboard-stat-value">{{ stats.users }}</span>
+          </div>
+          <div class="dashboard-stat-card">
+            <span class="dashboard-stat-label">Subthreads</span>
+            <span class="dashboard-stat-value">{{ stats.subthreads }}</span>
+          </div>
+          <div class="dashboard-stat-card">
+            <span class="dashboard-stat-label">Posts</span>
+            <span class="dashboard-stat-value">{{ stats.posts }}</span>
+          </div>
+          <div class="dashboard-stat-card">
+            <span class="dashboard-stat-label">Comments</span>
+            <span class="dashboard-stat-value">{{ stats.comments }}</span>
+          </div>
+          <div class="dashboard-stat-card">
+            <span class="dashboard-stat-label">Questions</span>
+            <span class="dashboard-stat-value">{{ stats.questions }}</span>
+          </div>
+          <div class="dashboard-stat-card">
+            <span class="dashboard-stat-label">Audit Events</span>
+            <span class="dashboard-stat-value">{{ stats.moderation_actions }}</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="dashboard-split-grid">
+        <section class="landing-panel dashboard-primary-panel">
+          <div class="dashboard-section-head">
+            <div>
+              <p class="dashboard-kicker">Recent Posts</p>
+              <h2 class="mt-2 text-xl font-semibold text-gray-900">Latest content</h2>
+            </div>
+            <a href="{% url 'main:index' %}" class="text-sm font-medium text-purple-600 hover:underline">Open full feed</a>
+          </div>
+
+          <div class="dashboard-list">
+            {% for post in dashboard_posts %}
+              <div
+                class="dashboard-list-card cursor-pointer"
+                role="link"
+                tabindex="0"
+                onclick="window.location.href='{{ post.detail_url }}'"
+                onkeydown="if (event.key === 'Enter') window.location.href='{{ post.detail_url }}'"
+              >
+                <div class="dashboard-list-meta">
+                  <a
+                    href="{% url 'main:subthread_detail' post.subthread %}"
+                    class="font-semibold text-purple-600 hover:underline"
+                    onclick="event.stopPropagation()"
+                    onkeydown="event.stopPropagation()"
+                  >
+                    d/{{ post.subthread }}
+                  </a>
+                  <span>&bull;</span>
+                  <span>u/{{ post.author }}</span>
+                  <span>&bull;</span>
+                  <span>{{ post.timeAgo }}</span>
+                </div>
+                <p class="dashboard-list-title">{{ post.title }}</p>
+                <p class="dashboard-list-copy">{{ post.content|truncatechars:150 }}</p>
+              </div>
+            {% empty %}
+              <div class="profile-empty">No posts yet.</div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="landing-panel dashboard-primary-panel">
+          <div class="dashboard-section-head">
+            <div>
+              <p class="dashboard-kicker">Recent Comments</p>
+              <h2 class="mt-2 text-xl font-semibold text-gray-900">Newest discussions</h2>
+            </div>
+          </div>
+
+          <div class="dashboard-list">
+            {% for comment in dashboard_comments %}
+              <a href="{{ comment.detail_url }}" class="dashboard-list-card">
+                <div class="dashboard-list-meta">
+                  <span class="font-semibold text-purple-600">d/{{ comment.subthread_name }}</span>
+                  <span>&bull;</span>
+                  <span>u/{{ comment.author }}</span>
+                  <span>&bull;</span>
+                  <span>{{ comment.time_ago }}</span>
+                </div>
+                <p class="dashboard-list-title">On {{ comment.post_title }}</p>
+                <p class="dashboard-list-copy">{{ comment.content|truncatechars:170 }}</p>
+              </a>
+            {% empty %}
+              <div class="profile-empty">No comments yet.</div>
+            {% endfor %}
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <aside class="self-start">
+      <div class="rail-layer space-y-4">
+        <section class="landing-panel p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="dashboard-kicker">Audit Log</p>
+              <h2 class="mt-2 text-lg font-semibold text-gray-900">Recent moderation</h2>
+            </div>
+          </div>
+
+          <div class="dashboard-log-list">
+            {% for log in audit_logs %}
+              <div class="dashboard-log-item">
+                <p class="dashboard-log-meta">
+                  <span class="font-semibold">u/{{ log.actor.username }}</span>
+                  <span>&bull;</span>
+                  <span>{{ log.created_at|timesince }} ago</span>
+                </p>
+                <p class="dashboard-log-title">{{ log.get_action_type_display }}</p>
+                {% if log.target_url %}
+                  <a href="{{ log.target_url }}" class="dashboard-log-link">{{ log.target_display }}</a>
+                {% else %}
+                  <p class="dashboard-log-link dashboard-log-link-static">{{ log.target_display }}</p>
+                {% endif %}
+                {% if log.detail %}
+                  <p class="dashboard-log-detail">{{ log.detail }}</p>
+                {% endif %}
+              </div>
+            {% empty %}
+              <div class="profile-empty">No moderation actions yet.</div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="landing-panel p-4">
+          <p class="dashboard-kicker">Newest Users</p>
+          <h2 class="mt-2 text-lg font-semibold text-gray-900">Recent signups</h2>
+          <div class="dashboard-list">
+            {% for dashboard_user in dashboard_users %}
+              <a href="{% url 'main:user_profile' dashboard_user.username %}" class="dashboard-list-card">
+                <div class="dashboard-list-meta">
+                  <span class="font-semibold text-purple-600">u/{{ dashboard_user.username }}</span>
+                  <span>&bull;</span>
+                  <span>{{ dashboard_user.date_joined|timesince }} ago</span>
+                </div>
+                <p class="dashboard-list-copy">Joined {{ dashboard_user.date_joined|date:"M j, Y" }}</p>
+              </a>
+            {% empty %}
+              <div class="profile-empty">No users yet.</div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="landing-panel p-4">
+          <p class="dashboard-kicker">Newest Subthreads</p>
+          <h2 class="mt-2 text-lg font-semibold text-gray-900">Community growth</h2>
+          <div class="dashboard-list">
+            {% for sub in dashboard_subthreads %}
+              <a href="{% url 'main:subthread_detail' sub.name %}" class="dashboard-list-card">
+                <div class="dashboard-list-meta">
+                  <span class="font-semibold text-purple-600">d/{{ sub.name }}</span>
+                  <span>&bull;</span>
+                  <span>{{ sub.created_at|timesince }} ago</span>
+                </div>
+                <p class="dashboard-list-copy">Created by u/{{ sub.created_by.username }} &bull; {{ sub.members }} members</p>
+              </a>
+            {% empty %}
+              <div class="profile-empty">No subthreads yet.</div>
+            {% endfor %}
+          </div>
+        </section>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+Watching for file changes with StatReloader
+[04/Apr/2026 12:56:00] "GET / HTTP/1.1" 302 0
+[04/Apr/2026 12:56:02] "GET /main/ HTTP/1.1" 200 80294
+[04/Apr/2026 12:56:02] "GET /static/css/dist/styles.css?v=1775278562 HTTP/1.1" 200 15296
+Not Found: /favicon.ico
+[04/Apr/2026 12:56:02] "GET /favicon.ico HTTP/1.1" 404 2650
+C:\Users\User\Documents\DevMax\DevMax\DevMax\settings.py changed, reloading.
+Watching for file changes with StatReloader

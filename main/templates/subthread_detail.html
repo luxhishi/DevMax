@@ -8,8 +8,6 @@
     </aside>
 
     <div class="min-w-0 space-y-4">
-      <a href="{% url 'main:index' %}" class="inline-block text-sm text-purple-600 hover:underline">&larr; Back to feed</a>
-
       <section class="landing-panel p-6 sm:p-8">
         <div class="flex flex-col gap-6 sm:gap-7">
           <div>
@@ -21,6 +19,14 @@
               <span>&bull;</span>
               <span>created by {{ subthread.created_by.username }}</span>
             </div>
+            {% if user.is_superuser %}
+            <div class="superuser-panel superuser-panel-subthread">
+              <div class="superuser-panel-head">
+                <span class="superuser-panel-kicker">Superuser Controls</span>
+                <span class="superuser-panel-note">Full subthread moderation</span>
+              </div>
+            </div>
+            {% endif %}
           </div>
         </div>
       </section>
@@ -37,27 +43,57 @@
       {% endif %}
     </div>
 
-    <aside class="space-y-4 rail-layer">
-      {% if user.is_authenticated %}
-      <button id="create-post-btn" type="button" class="w-full cursor-pointer rounded-full bg-purple-600 px-5 py-3.5 text-sm font-semibold text-white hover:bg-purple-700">
-        + Create Post
-      </button>
-      {% endif %}
-
-      <div class="space-y-3">
-        <div class="landing-panel p-3">
-          <div class="flex items-center justify-between pb-2">
-            <h3 class="text-[11px] font-semibold text-gray-500">Suggested Subthreads</h3>
-            {% if user.is_authenticated %}
-            <button id="create-subthread-btn" class="cursor-pointer text-[10px] font-semibold text-purple-600 hover:text-purple-700">New</button>
-            {% endif %}
-          </div>
-          {% if suggested_subthreads %}
-            {% for sub in suggested_subthreads %}
-              {% include "components/subthread_card.html" with sub=sub %}
-            {% endfor %}
+    <aside class="self-start">
+      <div class="rail-layer space-y-4">
+        {% if user.is_authenticated %}
+        <div class="subthread-action-row">
+          <button id="create-post-btn" type="button" class="subthread-action-button subthread-action-button-primary">
+            + Create Post
+          </button>
+          {% if subthread_is_joined %}
+            <div class="subthread-membership-stack">
+              <span class="subthread-action-button subthread-action-button-secondary subthread-action-button-static">
+                Joined
+              </span>
+              <form method="post" action="{% url 'main:leave_subthread' subthread.name %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="subthread-inline-action subthread-inline-action-danger">
+                  Leave subthread
+                </button>
+              </form>
+            </div>
           {% else %}
-            <p class="text-sm text-gray-500">No suggestions yet.</p>
+            <form method="post" action="{% url 'main:join_subthread' subthread.name %}" class="subthread-action-slot">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="subthread-action-button subthread-action-button-secondary subthread-action-button-fill">
+                Join
+              </button>
+            </form>
+          {% endif %}
+        </div>
+        {% if can_manage_subthread %}
+        <form method="post" action="{% url 'main:delete_subthread' subthread.name %}" onsubmit="return window.confirm('Delete d/{{ subthread.name }} and everything in it?');">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'main:index' %}">
+          <button type="submit" class="subthread-inline-action subthread-inline-action-danger subthread-inline-action-block">
+            Delete subthread
+          </button>
+        </form>
+        {% endif %}
+        {% endif %}
+
+        <div>
+          <h3 class="font-semibold mb-3">Suggested Subthreads</h3>
+          {% if suggested_subthreads %}
+            <div class="space-y-3">
+              {% for sub in suggested_subthreads %}
+                {% include "components/subthread_card.html" with sub=sub %}
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-gray-500">No suggestions yet.</p>
           {% endif %}
         </div>
       </div>
@@ -66,36 +102,50 @@
 
   {% if user.is_authenticated %}
   <div id="create-post-modal" class="modal-overlay" aria-hidden="true">
-    <div class="modal-card relative p-6 sm:p-7">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">New Post</p>
-          <h3 class="mt-2 text-2xl font-semibold text-gray-900">Create a post in d/{{ subthread.name }}</h3>
-          <p class="modal-note mt-2">Share an update, ask a question, or start a discussion for this subthread.</p>
+    <div class="modal-card modal-shell">
+      <div class="modal-header">
+        <div class="modal-copy">
+          <p class="modal-kicker">New Post</p>
+          <h3 class="modal-title">Create a post in d/{{ subthread.name }}</h3>
+          <p class="modal-note">Share an update, ask a question, or start a discussion for this subthread.</p>
         </div>
         <button
           type="button"
           id="close-post-x"
-          class="flex h-8 w-8 cursor-pointer items-center justify-center self-start text-2xl leading-none text-gray-500 hover:text-gray-900"
+          class="modal-close"
           aria-label="Close create post modal"
         >
           &times;
         </button>
       </div>
 
-      <form method="post" action="{% url 'main:create_post' subthread.name %}" class="space-y-3">
+      <form method="post" action="{% url 'main:create_post' subthread.name %}" class="modal-form" data-single-submit-form>
         {% csrf_token %}
-        <div class="pt-2">
-          <label for="post-title" class="mb-2 block text-sm font-medium text-gray-900">Title</label>
+        <div class="modal-field-group">
+          <label for="post-title" class="modal-label">Title</label>
           <input id="post-title" type="text" name="title" placeholder="Give your post a title" class="modal-field" required>
         </div>
-        <div>
-          <label for="post-content" class="mb-2 block text-sm font-medium text-gray-900">Content</label>
-          <textarea id="post-content" name="content" placeholder="What do you want to share?" class="modal-field min-h-[10rem] resize-y" rows="6" required></textarea>
+        <div class="modal-field-group">
+          <label for="post-content" class="modal-label">Content</label>
+          {% include "components/code_toolbar.html" with target_id="post-content" %}
+          <textarea id="post-content" name="content" placeholder="What do you want to share?" class="modal-field modal-field-tall resize-y" rows="6" required></textarea>
         </div>
-        <div class="flex gap-3 pt-3">
-          <button type="button" id="cancel-post" class="flex-1 cursor-pointer rounded-full border border-gray-300 py-2.5 px-4 text-sm font-medium text-gray-700 hover:bg-gray-100">Cancel</button>
-          <button type="submit" class="flex-1 cursor-pointer rounded-full bg-purple-600 py-2.5 px-4 text-sm font-semibold text-white hover:bg-purple-700">Create Post</button>
+        <div class="modal-field-group">
+          <label for="post-tags" class="modal-label">Tags</label>
+          <input id="post-tags" type="text" name="tags" placeholder="e.g. python, backend, debugging" class="modal-field">
+          <p class="modal-hint">Use commas to separate up to five tags.</p>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancel-post" class="modal-button modal-button-secondary">Cancel</button>
+          <button
+            type="submit"
+            class="modal-button modal-button-primary"
+            data-submit-loading-button
+            data-loading-label="Creating..."
+          >
+            <span class="modal-button-spinner" aria-hidden="true"></span>
+            <span data-submit-button-label>Create Post</span>
+          </button>
         </div>
       </form>
     </div>
@@ -104,40 +154,42 @@
 
   {% if user.is_authenticated %}
   <div id="create-subthread-modal" class="modal-overlay" aria-hidden="true">
-    <div class="modal-card relative p-6 sm:p-7">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">New Community</p>
-          <h3 class="mt-2 text-2xl font-semibold text-gray-900">Create a subthread</h3>
-          <p class="modal-note mt-2">Give your community a clear name and a short description so people know what belongs there.</p>
+    <div class="modal-card modal-shell">
+      <div class="modal-header">
+        <div class="modal-copy">
+          <p class="modal-kicker">New Community</p>
+          <h3 class="modal-title">Create a subthread</h3>
+          <p class="modal-note">Give your community a clear name and a short description so people know what belongs there.</p>
         </div>
         <button
           type="button"
           id="close-subthread-x"
-          class="flex h-8 w-8 cursor-pointer items-center justify-center self-start text-2xl leading-none text-gray-500 hover:text-gray-900"
+          class="modal-close"
           aria-label="Close create subthread modal"
         >
           &times;
         </button>
       </div>
 
-      <form method="post" action="{% url 'main:create_subthread' %}" class="space-y-3">
+      <form method="post" action="{% url 'main:create_subthread' %}" class="modal-form">
         {% csrf_token %}
-        <div class="pt-2">
-          <label for="subthread-name" class="mb-2 block text-sm font-medium text-gray-900">Name</label>
+        <div class="modal-field-group">
+          <label for="subthread-name" class="modal-label">Name</label>
           <input id="subthread-name" type="text" name="name" placeholder="e.g. python" class="modal-field" required maxlength="100">
         </div>
-        <div>
-          <label for="subthread-description" class="mb-2 block text-sm font-medium text-gray-900">Description</label>
-          <textarea id="subthread-description" name="description" placeholder="What is this subthread about?" class="modal-field min-h-[8rem] resize-y" rows="4"></textarea>
+        <div class="modal-field-group">
+          <label for="subthread-description" class="modal-label">Description</label>
+          <textarea id="subthread-description" name="description" placeholder="What is this subthread about?" class="modal-field modal-field-tall resize-y" rows="5"></textarea>
         </div>
-        <div class="flex gap-3 pt-3">
-          <button type="button" id="cancel-subthread" class="flex-1 cursor-pointer rounded-full border border-gray-300 py-2.5 px-4 text-sm font-medium text-gray-700 hover:bg-gray-100">Cancel</button>
-          <button type="submit" class="flex-1 cursor-pointer rounded-full bg-purple-600 py-2.5 px-4 text-sm font-semibold text-white hover:bg-purple-700">Create Subthread</button>
+        <div class="modal-actions">
+          <button type="button" id="cancel-subthread" class="modal-button modal-button-secondary">Cancel</button>
+          <button type="submit" class="modal-button modal-button-primary">Create Subthread</button>
         </div>
       </form>
       {% if error %}
-        <p class="mt-4 rounded-xl border border-red-300/50 bg-red-50/70 p-3 text-sm text-red-500">{{ error }}</p>
+        <div class="px-6 pb-6 sm:px-7 sm:pb-7">
+          <p class="rounded-xl border border-red-300/50 bg-red-50/70 p-3 text-sm text-red-500">{{ error }}</p>
+        </div>
       {% endif %}
     </div>
   </div>
@@ -201,6 +253,31 @@ document.addEventListener('DOMContentLoaded', function() {
     openId: 'create-post-btn',
     cancelId: 'cancel-post',
     closeId: 'close-post-x',
+  });
+
+  document.querySelectorAll('[data-single-submit-form]').forEach((form) => {
+    const submitButton = form.querySelector('[data-submit-loading-button]');
+    const submitLabel = submitButton ? submitButton.querySelector('[data-submit-button-label]') : null;
+    const loadingLabel = submitButton ? (submitButton.dataset.loadingLabel || 'Loading...') : 'Loading...';
+
+    form.addEventListener('submit', (event) => {
+      if (form.dataset.submitting === 'true') {
+        event.preventDefault();
+        return;
+      }
+
+      form.dataset.submitting = 'true';
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.classList.add('is-loading');
+        submitButton.setAttribute('aria-busy', 'true');
+      }
+
+      if (submitLabel) {
+        submitLabel.textContent = loadingLabel;
+      }
+    });
   });
 });
 </script>

@@ -1,0 +1,20 @@
+<div
+  class="achievement-chip achievement-chip-{{ achievement.level }}{% if compact %} achievement-chip-compact{% endif %}"
+  data-achievement-level="{{ achievement.level }}"
+  {% if compact %}title="{{ achievement.name }} {{ achievement.aura_bonus_display }}"{% endif %}
+>
+  <span class="achievement-icon achievement-icon-{{ achievement.level }}">
+    <span class="achievement-icon-fallback">{{ achievement.fallback_label }}</span>
+    <img
+      src="{{ achievement.image_url }}"
+      alt=""
+      class="achievement-icon-image"
+      loading="lazy"
+      onerror="this.remove()"
+    >
+  </span>
+  <span class="achievement-chip-copy">
+    <span class="achievement-chip-title">{{ achievement.name }}</span>
+    <span class="achievement-chip-meta">{{ achievement.aura_bonus_display }}</span>
+  </span>
+</div>
