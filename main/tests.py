@@ -35,6 +35,7 @@ class RoutingTests(TestCase):
         self.assertEqual(reverse("main:profile"), "/main/profile/")
         self.assertEqual(reverse("main:update_profile_photo"), "/main/profile/photo/")
         self.assertEqual(reverse("main:update_profile_bio"), "/main/profile/bio/")
+        self.assertEqual(reverse("main:user_profile_photo", args=["alice"]), "/main/u/alice/photo/")
         self.assertEqual(reverse("main:user_hover_card", args=["alice"]), "/main/u/alice/hover-card/")
         self.assertEqual(reverse("main:user_profile", args=["alice"]), "/main/u/alice/")
         self.assertEqual(reverse("main:subthread_detail", args=["python"]), "/main/d/python/")
@@ -1361,12 +1362,29 @@ class RoutingTests(TestCase):
             )
 
             preference = UserPreference.objects.get(user=user)
-            uploaded_url = preference.profile_photo.url
+            uploaded_url = reverse("main:user_profile_photo", args=[user.username])
 
             self.assertEqual(response.status_code, 200)
-            self.assertTrue(preference.profile_photo.name.startswith("profile_photos/"))
+            self.assertEqual(bytes(preference.profile_photo_blob), b"fake image bytes")
+            self.assertEqual(preference.profile_photo_content_type, "image/png")
+            self.assertFalse(bool(preference.profile_photo))
             self.assertContains(response, "Profile photo updated.")
             self.assertContains(response, f'src="{uploaded_url}"')
+
+    def test_profile_photo_asset_serves_database_backed_image(self):
+        user = User.objects.create_user(username="photoasset", password="testpass123")
+        UserPreference.objects.create(
+            user=user,
+            profile_photo_blob=b"avatar-bytes",
+            profile_photo_content_type="image/png",
+        )
+
+        response = self.client.get(reverse("main:user_profile_photo", args=[user.username]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "image/png")
+        self.assertEqual(response["Cache-Control"], "no-store")
+        self.assertEqual(response.content, b"avatar-bytes")
 
     def test_profile_photo_upload_rejects_non_image_files(self):
         user = User.objects.create_user(username="badphoto", password="testpass123")
@@ -1388,6 +1406,8 @@ class RoutingTests(TestCase):
             preference = UserPreference.objects.get(user=user)
 
             self.assertEqual(response.status_code, 200)
+            self.assertIsNone(preference.profile_photo_blob)
+            self.assertEqual(preference.profile_photo_content_type, "")
             self.assertFalse(bool(preference.profile_photo))
             self.assertContains(response, "Use a JPG, PNG, GIF, or WebP image for your profile photo.")
 

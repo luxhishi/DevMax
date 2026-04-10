@@ -26,6 +26,7 @@ urlpatterns = [
     path('profile/', views.profile_redirect, name='profile'),
     path('profile/photo/', views.update_profile_photo, name='update_profile_photo'),
     path('profile/bio/', views.update_profile_bio, name='update_profile_bio'),
+    path('u/<str:username>/photo/', views.user_profile_photo, name='user_profile_photo'),
     path('u/<str:username>/hover-card/', views.user_hover_card, name='user_hover_card'),
     path('u/<str:username>/', views.profile_view, name='user_profile'),
     path('display-mode/', views.update_display_mode, name='update_display_mode'),

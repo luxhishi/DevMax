@@ -1,0 +1,1379 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Length 2727 >>
+stream
+BT
+/F2 22 Tf
+1 0 0 1 54 738 Tm
+(DevMax Reviewer Guide) Tj
+/F2 16 Tf
+1 0 0 1 54 698 Tm
+(Purpose) Tj
+/F1 11 Tf
+1 0 0 1 54 669 Tm
+(This guide is a presenter-facing walkthrough of the current DevMax website.) Tj
+/F1 11 Tf
+1 0 0 1 54 654 Tm
+(It is written so that a reviewer, teammate, judge, or demo presenter can) Tj
+/F1 11 Tf
+1 0 0 1 54 639 Tm
+(study one document and understand what the product does, how the major) Tj
+/F1 11 Tf
+1 0 0 1 54 624 Tm
+(mechanics connect, and what to emphasize during a live demonstration.) Tj
+/F2 16 Tf
+1 0 0 1 54 599 Tm
+(Product Summary) Tj
+/F1 11 Tf
+1 0 0 1 54 570 Tm
+(DevMax is a developer-focused forum platform built around community discussion.) Tj
+/F1 11 Tf
+1 0 0 1 54 555 Tm
+(The site combines community feeds, question solving, reputation mechanics,) Tj
+/F1 11 Tf
+1 0 0 1 54 540 Tm
+(predictive search, customizable user profiles, and moderation controls in a) Tj
+/F1 11 Tf
+1 0 0 1 54 525 Tm
+(single web experience.) Tj
+/F1 11 Tf
+1 0 0 1 54 500 Tm
+(The product language intentionally uses:) Tj
+/F1 11 Tf
+1 0 0 1 66 475 Tm
+(- "Subthreads" for topic communities, displayed as `d/<name>`) Tj
+/F1 11 Tf
+1 0 0 1 66 460 Tm
+(- "Aura" instead of karma or reputation) Tj
+/F1 11 Tf
+1 0 0 1 66 445 Tm
+(- "Achievements" instead of generic badges) Tj
+/F2 16 Tf
+1 0 0 1 54 420 Tm
+(High-Level Navigation) Tj
+/F1 11 Tf
+1 0 0 1 54 391 Tm
+(The primary user-facing areas are:) Tj
+/F1 11 Tf
+1 0 0 1 66 366 Tm
+(- Home feed) Tj
+/F1 11 Tf
+1 0 0 1 66 351 Tm
+(- Trending feed) Tj
+/F1 11 Tf
+1 0 0 1 66 336 Tm
+(- Questions feed) Tj
+/F1 11 Tf
+1 0 0 1 66 321 Tm
+(- Individual subthreads) Tj
+/F1 11 Tf
+1 0 0 1 66 306 Tm
+(- Individual post detail pages) Tj
+/F1 11 Tf
+1 0 0 1 66 291 Tm
+(- User profiles) Tj
+/F1 11 Tf
+1 0 0 1 66 276 Tm
+(- Global search) Tj
+/F1 11 Tf
+1 0 0 1 66 261 Tm
+(- Notifications and account menu in the header) Tj
+/F1 11 Tf
+1 0 0 1 54 236 Tm
+(For superusers, there is also a moderation dashboard.) Tj
+/F2 16 Tf
+1 0 0 1 54 211 Tm
+(Core Demo Story) Tj
+/F1 11 Tf
+1 0 0 1 54 182 Tm
+(If someone needs a clean presentation flow, this is the easiest sequence:) Tj
+/F1 11 Tf
+1 0 0 1 54 157 Tm
+(1. Show the Home feed and explain that it is the personalized feed.) Tj
+/F1 11 Tf
+1 0 0 1 54 142 Tm
+(2. Open Trending and explain that it is sitewide momentum, not the same as Home.) Tj
+/F1 11 Tf
+1 0 0 1 54 127 Tm
+(3. Open Questions and explain the solved workflow.) Tj
+/F1 11 Tf
+1 0 0 1 54 112 Tm
+(4. Enter a subthread and create or inspect a post.) Tj
+/F1 11 Tf
+1 0 0 1 54 97 Tm
+(5. Open a post detail page and show threaded comments, votes, and accepted answers.) Tj
+/F1 11 Tf
+1 0 0 1 54 82 Tm
+(6. Hover a username to show the Aura and achievement hover card.) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 1 of 12) Tj
+ET
+endstream
+endobj
+4 0 obj
+<< /Length 2416 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 54 738 Tm
+(7. Open a user profile to show profile photo, bio, Aura, achievements, and top posts.) Tj
+/F1 11 Tf
+1 0 0 1 54 723 Tm
+(8. Open the header search bar and show the predictive dropdown.) Tj
+/F1 11 Tf
+1 0 0 1 54 708 Tm
+(9. Open notifications and explain engagement events.) Tj
+/F1 11 Tf
+1 0 0 1 66 693 Tm
+(10. If relevant, show the superuser dashboard and manual moderation controls.) Tj
+/F2 16 Tf
+1 0 0 1 54 668 Tm
+(Authentication and Onboarding) Tj
+/F1 11 Tf
+1 0 0 1 54 639 Tm
+(DevMax supports:) Tj
+/F1 11 Tf
+1 0 0 1 66 614 Tm
+(- Sign up) Tj
+/F1 11 Tf
+1 0 0 1 66 599 Tm
+(- Log in) Tj
+/F1 11 Tf
+1 0 0 1 66 584 Tm
+(- Log out) Tj
+/F1 11 Tf
+1 0 0 1 66 569 Tm
+(- Redirect to the Home feed immediately after successful signup) Tj
+/F1 11 Tf
+1 0 0 1 54 544 Tm
+(The login page also includes a direct CTA for new users:) Tj
+/F1 11 Tf
+1 0 0 1 66 519 Tm
+(- "New to DevMax? Sign up here") Tj
+/F1 11 Tf
+1 0 0 1 54 494 Tm
+(This is important in demos because new-user navigation is now obvious from both) Tj
+/F1 11 Tf
+1 0 0 1 54 479 Tm
+(the header and the login screen itself.) Tj
+/F2 16 Tf
+1 0 0 1 54 454 Tm
+(Header and Global Shell) Tj
+/F1 11 Tf
+1 0 0 1 54 425 Tm
+(The shared header includes:) Tj
+/F1 11 Tf
+1 0 0 1 66 400 Tm
+(- DevMax brand link) Tj
+/F1 11 Tf
+1 0 0 1 66 385 Tm
+(- Global search bar) Tj
+/F1 11 Tf
+1 0 0 1 66 370 Tm
+(- Notification bell for authenticated users) Tj
+/F1 11 Tf
+1 0 0 1 66 355 Tm
+(- Avatar menu for authenticated users) Tj
+/F1 11 Tf
+1 0 0 1 66 340 Tm
+(- Log in and Sign Up links for anonymous users) Tj
+/F1 11 Tf
+1 0 0 1 54 315 Tm
+(The header search bar supports predictive suggestions while typing. The) Tj
+/F1 11 Tf
+1 0 0 1 54 300 Tm
+(dropdown can show:) Tj
+/F1 11 Tf
+1 0 0 1 66 275 Tm
+(- Suggested searches) Tj
+/F1 11 Tf
+1 0 0 1 66 260 Tm
+(- Matching communities) Tj
+/F1 11 Tf
+1 0 0 1 66 245 Tm
+(- Matching user profiles) Tj
+/F1 11 Tf
+1 0 0 1 66 230 Tm
+(- Matching posts) Tj
+/F1 11 Tf
+1 0 0 1 54 205 Tm
+(Keyboard behavior includes:) Tj
+/F1 11 Tf
+1 0 0 1 66 180 Tm
+(- Arrow key navigation) Tj
+/F1 11 Tf
+1 0 0 1 66 165 Tm
+(- Enter to open a highlighted result) Tj
+/F1 11 Tf
+1 0 0 1 66 150 Tm
+(- Click-outside dismissal) Tj
+/F1 11 Tf
+1 0 0 1 54 125 Tm
+(The site also supports:) Tj
+/F1 11 Tf
+1 0 0 1 66 100 Tm
+(- Light and dark display mode) Tj
+/F1 11 Tf
+1 0 0 1 66 85 Tm
+(- A custom browser tab icon via `site-icon.png`) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 2 of 12) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Length 2540 >>
+stream
+BT
+/F2 16 Tf
+1 0 0 1 54 738 Tm
+(Home Feed) Tj
+/F1 11 Tf
+1 0 0 1 54 709 Tm
+(Home is the personalized feed.) Tj
+/F1 11 Tf
+1 0 0 1 54 684 Tm
+(Behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 659 Tm
+(- For logged-in regular users, Home prioritizes posts from joined subthreads.) Tj
+/F1 11 Tf
+1 0 0 1 66 644 Tm
+(- For anonymous visitors and superusers, Home can show the wider feed.) Tj
+/F1 11 Tf
+1 0 0 1 66 629 Tm
+(- Ranking is not based only on raw lifetime upvotes.) Tj
+/F1 11 Tf
+1 0 0 1 66 614 Tm
+(- Recent content gets a freshness advantage, with engagement from votes and) Tj
+/F1 11 Tf
+1 0 0 1 54 599 Tm
+(comments contributing to position.) Tj
+/F1 11 Tf
+1 0 0 1 54 574 Tm
+(What to say in a demo:) Tj
+/F1 11 Tf
+1 0 0 1 66 549 Tm
+(- Home is meant to feel relevant to the communities the user actually joined.) Tj
+/F1 11 Tf
+1 0 0 1 66 534 Tm
+(- It is distinct from Trending because it is community-first rather than) Tj
+/F1 11 Tf
+1 0 0 1 54 519 Tm
+(sitewide momentum-first.) Tj
+/F2 16 Tf
+1 0 0 1 54 494 Tm
+(Trending Feed) Tj
+/F1 11 Tf
+1 0 0 1 54 465 Tm
+(Trending is a sitewide momentum feed.) Tj
+/F1 11 Tf
+1 0 0 1 54 440 Tm
+(Behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 415 Tm
+(- It looks across the whole platform.) Tj
+/F1 11 Tf
+1 0 0 1 66 400 Tm
+(- It uses a recent activity window rather than lifetime popularity.) Tj
+/F1 11 Tf
+1 0 0 1 66 385 Tm
+(- It excludes auto-generated welcome posts.) Tj
+/F1 11 Tf
+1 0 0 1 66 370 Tm
+(- It requires a minimum amount of engagement before a post can trend.) Tj
+/F1 11 Tf
+1 0 0 1 66 355 Tm
+(- Manual superuser vote boosts affect trending, which is useful for demos.) Tj
+/F1 11 Tf
+1 0 0 1 54 330 Tm
+(What to say in a demo:) Tj
+/F1 11 Tf
+1 0 0 1 66 305 Tm
+(- Trending answers the question, "What is catching on across DevMax right now?") Tj
+/F1 11 Tf
+1 0 0 1 66 290 Tm
+(- It is intentionally different from Home so the two feeds are not redundant.) Tj
+/F2 16 Tf
+1 0 0 1 54 265 Tm
+(Questions Feed) Tj
+/F1 11 Tf
+1 0 0 1 54 236 Tm
+(The Questions feed is the structured Q and A layer of the product.) Tj
+/F1 11 Tf
+1 0 0 1 54 211 Tm
+(Entry points:) Tj
+/F1 11 Tf
+1 0 0 1 66 186 Tm
+(- Dedicated Questions page) Tj
+/F1 11 Tf
+1 0 0 1 66 171 Tm
+(- Ask Question modal) Tj
+/F1 11 Tf
+1 0 0 1 66 156 Tm
+(- Question-style posts also link to standard post detail pages) Tj
+/F1 11 Tf
+1 0 0 1 54 131 Tm
+(Available question controls:) Tj
+/F1 11 Tf
+1 0 0 1 66 106 Tm
+(- Sort by Newest) Tj
+/F1 11 Tf
+1 0 0 1 66 91 Tm
+(- Sort by Most Discussed) Tj
+/F1 11 Tf
+1 0 0 1 66 76 Tm
+(- Sort by Most Upvoted) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 3 of 12) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Length 2312 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 66 738 Tm
+(- Filter by All) Tj
+/F1 11 Tf
+1 0 0 1 66 723 Tm
+(- Filter by Open) Tj
+/F1 11 Tf
+1 0 0 1 66 708 Tm
+(- Filter by Solved) Tj
+/F1 11 Tf
+1 0 0 1 66 693 Tm
+(- Filter by Unanswered) Tj
+/F1 11 Tf
+1 0 0 1 54 668 Tm
+(Question mechanics:) Tj
+/F1 11 Tf
+1 0 0 1 66 643 Tm
+(- Questions are stored as posts marked as question content.) Tj
+/F1 11 Tf
+1 0 0 1 66 628 Tm
+(- Solved questions show a clear solved state.) Tj
+/F1 11 Tf
+1 0 0 1 66 613 Tm
+(- Unanswered questions are explicitly detectable.) Tj
+/F1 11 Tf
+1 0 0 1 66 598 Tm
+(- Open questions have comments but no accepted answer.) Tj
+/F2 16 Tf
+1 0 0 1 54 573 Tm
+(Solved Question Workflow) Tj
+/F1 11 Tf
+1 0 0 1 54 544 Tm
+(DevMax supports accepted answers.) Tj
+/F1 11 Tf
+1 0 0 1 54 519 Tm
+(Rules:) Tj
+/F1 11 Tf
+1 0 0 1 66 494 Tm
+(- Only the author of the question can mark a comment as solved.) Tj
+/F1 11 Tf
+1 0 0 1 66 479 Tm
+(- A superuser can also mark or unmark a solution.) Tj
+/F1 11 Tf
+1 0 0 1 54 454 Tm
+(Visible solved-state behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 429 Tm
+(- Solved pill on question cards) Tj
+/F1 11 Tf
+1 0 0 1 66 414 Tm
+(- Solved pill on the question detail page) Tj
+/F1 11 Tf
+1 0 0 1 66 399 Tm
+(- Accepted answer badge on the accepted comment) Tj
+/F1 11 Tf
+1 0 0 1 66 384 Tm
+(- Accepted answer promoted to the top area of the thread) Tj
+/F1 11 Tf
+1 0 0 1 66 369 Tm
+(- Unmark solved action on the accepted answer) Tj
+/F1 11 Tf
+1 0 0 1 54 344 Tm
+(What to say in a demo:) Tj
+/F1 11 Tf
+1 0 0 1 66 319 Tm
+(- DevMax treats Q and A content differently from general discussion.) Tj
+/F1 11 Tf
+1 0 0 1 66 304 Tm
+(- The solved flow gives the Questions feed a clear purpose separate from Home) Tj
+/F1 11 Tf
+1 0 0 1 54 289 Tm
+(and Trending.) Tj
+/F2 16 Tf
+1 0 0 1 54 264 Tm
+(Subthreads) Tj
+/F1 11 Tf
+1 0 0 1 54 235 Tm
+(Subthreads are the community containers for content.) Tj
+/F1 11 Tf
+1 0 0 1 54 210 Tm
+(Examples:) Tj
+/F1 11 Tf
+1 0 0 1 66 185 Tm
+(- `d/python`) Tj
+/F1 11 Tf
+1 0 0 1 66 170 Tm
+(- `d/django`) Tj
+/F1 11 Tf
+1 0 0 1 66 155 Tm
+(- `d/c++`) Tj
+/F1 11 Tf
+1 0 0 1 54 130 Tm
+(Current subthread mechanics:) Tj
+/F1 11 Tf
+1 0 0 1 66 105 Tm
+(- Create subthread from a floating modal) Tj
+/F1 11 Tf
+1 0 0 1 66 90 Tm
+(- Join subthread) Tj
+/F1 11 Tf
+1 0 0 1 66 75 Tm
+(- Leave subthread) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 4 of 12) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Length 2409 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 66 738 Tm
+(- Delete subthread if the user manages it) Tj
+/F1 11 Tf
+1 0 0 1 66 723 Tm
+(- Member counts on the subthread page) Tj
+/F1 11 Tf
+1 0 0 1 66 708 Tm
+(- Suggested subthreads in side rails) Tj
+/F1 11 Tf
+1 0 0 1 54 683 Tm
+(Subthread pages provide:) Tj
+/F1 11 Tf
+1 0 0 1 66 658 Tm
+(- Community banner and description) Tj
+/F1 11 Tf
+1 0 0 1 66 643 Tm
+(- Joined state) Tj
+/F1 11 Tf
+1 0 0 1 66 628 Tm
+(- Create Post action) Tj
+/F1 11 Tf
+1 0 0 1 66 613 Tm
+(- Full feed of posts in that community) Tj
+/F1 11 Tf
+1 0 0 1 54 588 Tm
+(Important navigation detail:) Tj
+/F1 11 Tf
+1 0 0 1 66 563 Tm
+(- The visible `d/<subthread>` label on posts is clickable and routes back to) Tj
+/F1 11 Tf
+1 0 0 1 54 548 Tm
+(the post's originating subthread.) Tj
+/F2 16 Tf
+1 0 0 1 54 523 Tm
+(Post Creation and Display) Tj
+/F1 11 Tf
+1 0 0 1 54 494 Tm
+(Posts are the main discussion units.) Tj
+/F1 11 Tf
+1 0 0 1 54 469 Tm
+(Creation flow:) Tj
+/F1 11 Tf
+1 0 0 1 66 444 Tm
+(- Create Post opens in a floating modal) Tj
+/F1 11 Tf
+1 0 0 1 66 429 Tm
+(- Single-submit loading state prevents duplicate posts from spam clicking) Tj
+/F1 11 Tf
+1 0 0 1 66 414 Tm
+(- Users can add tags manually) Tj
+/F1 11 Tf
+1 0 0 1 66 399 Tm
+(- Tags are limited and normalized) Tj
+/F1 11 Tf
+1 0 0 1 54 374 Tm
+(Question-aware behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 349 Tm
+(- Question-style posts automatically include a `question` tag) Tj
+/F1 11 Tf
+1 0 0 1 54 324 Tm
+(Post card behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 299 Tm
+(- Shows subthread, author, time, title, content, tags, vote count, and comment count) Tj
+/F1 11 Tf
+1 0 0 1 66 284 Tm
+(- Achievement badge can appear in the top-right corner) Tj
+/F1 11 Tf
+1 0 0 1 66 269 Tm
+(- Post owner can delete their own post) Tj
+/F1 11 Tf
+1 0 0 1 66 254 Tm
+(- Superusers can also manage posts) Tj
+/F1 11 Tf
+1 0 0 1 54 229 Tm
+(Delete affordance refinement already present:) Tj
+/F1 11 Tf
+1 0 0 1 66 204 Tm
+(- Delete styling is neutral by default) Tj
+/F1 11 Tf
+1 0 0 1 66 189 Tm
+(- The trash icon stays visible) Tj
+/F1 11 Tf
+1 0 0 1 66 174 Tm
+(- Destructive color emphasis appears on hover/focus) Tj
+/F2 16 Tf
+1 0 0 1 54 149 Tm
+(Tags) Tj
+/F1 11 Tf
+1 0 0 1 54 120 Tm
+(Tag behavior is part manual and part assisted.) Tj
+/F1 11 Tf
+1 0 0 1 54 95 Tm
+(Current rules:) Tj
+/F1 11 Tf
+1 0 0 1 66 70 Tm
+(- Users can provide tags when creating a post or asking a question) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 5 of 12) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Length 2355 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 66 738 Tm
+(- Tags are normalized and limited) Tj
+/F1 11 Tf
+1 0 0 1 66 723 Tm
+(- Some posts can receive fallback tags based on context) Tj
+/F1 11 Tf
+1 0 0 1 66 708 Tm
+(- Question-style posts always receive the `question` tag) Tj
+/F1 11 Tf
+1 0 0 1 66 693 Tm
+(- Tags are clickable and route to search results) Tj
+/F2 16 Tf
+1 0 0 1 54 668 Tm
+(Comments and Replies) Tj
+/F1 11 Tf
+1 0 0 1 54 639 Tm
+(DevMax supports threaded discussion.) Tj
+/F1 11 Tf
+1 0 0 1 54 614 Tm
+(Comment mechanics:) Tj
+/F1 11 Tf
+1 0 0 1 66 589 Tm
+(- Top-level comments) Tj
+/F1 11 Tf
+1 0 0 1 66 574 Tm
+(- Nested replies) Tj
+/F1 11 Tf
+1 0 0 1 66 559 Tm
+(- Collapse and expand for reply threads) Tj
+/F1 11 Tf
+1 0 0 1 66 544 Tm
+(- Inline reply forms) Tj
+/F1 11 Tf
+1 0 0 1 66 529 Tm
+(- Comment voting) Tj
+/F1 11 Tf
+1 0 0 1 66 514 Tm
+(- Comment deletion for managers) Tj
+/F1 11 Tf
+1 0 0 1 54 489 Tm
+(Discussion UI behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 464 Tm
+(- Root comments and replies have distinct visual treatment) Tj
+/F1 11 Tf
+1 0 0 1 66 449 Tm
+(- Reply counts are shown on collapsible threads) Tj
+/F1 11 Tf
+1 0 0 1 66 434 Tm
+(- Code formatting tools are available in composition flows) Tj
+/F2 16 Tf
+1 0 0 1 54 409 Tm
+(Voting) Tj
+/F1 11 Tf
+1 0 0 1 54 380 Tm
+(Votes apply to both posts and comments.) Tj
+/F1 11 Tf
+1 0 0 1 54 355 Tm
+(Voting behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 330 Tm
+(- Upvote) Tj
+/F1 11 Tf
+1 0 0 1 66 315 Tm
+(- Downvote) Tj
+/F1 11 Tf
+1 0 0 1 66 300 Tm
+(- Toggle off by clicking the same vote again) Tj
+/F1 11 Tf
+1 0 0 1 66 285 Tm
+(- Logged-in user vote state is reflected visually) Tj
+/F1 11 Tf
+1 0 0 1 66 270 Tm
+(- Vote totals are synchronized after actions) Tj
+/F1 11 Tf
+1 0 0 1 54 245 Tm
+(Superuser moderation behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 220 Tm
+(- Manual post upvote boost) Tj
+/F1 11 Tf
+1 0 0 1 66 205 Tm
+(- Manual post downvote boost) Tj
+/F1 11 Tf
+1 0 0 1 66 190 Tm
+(- Manual comment upvote boost) Tj
+/F1 11 Tf
+1 0 0 1 66 175 Tm
+(- Manual comment downvote boost) Tj
+/F1 11 Tf
+1 0 0 1 54 150 Tm
+(These manual boosts are particularly useful in demos because they can be used) Tj
+/F1 11 Tf
+1 0 0 1 54 135 Tm
+(to surface content into Trending or trigger reputation milestones.) Tj
+/F2 16 Tf
+1 0 0 1 54 110 Tm
+(Achievements) Tj
+/F1 11 Tf
+1 0 0 1 54 81 Tm
+(DevMax includes three achievement tiers.) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 6 of 12) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Length 2122 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 54 738 Tm
+(Current tiers:) Tj
+/F1 11 Tf
+1 0 0 1 66 713 Tm
+(- Baby Steps) Tj
+/F1 11 Tf
+1 0 0 1 66 698 Tm
+(- Adept) Tj
+/F1 11 Tf
+1 0 0 1 66 683 Tm
+(- To The Stars) Tj
+/F1 11 Tf
+1 0 0 1 54 658 Tm
+(Award logic:) Tj
+/F1 11 Tf
+1 0 0 1 66 633 Tm
+(- Baby Steps at 5 upvotes on a post or comment) Tj
+/F1 11 Tf
+1 0 0 1 66 618 Tm
+(- Adept at 10 upvotes on a post or comment) Tj
+/F1 11 Tf
+1 0 0 1 66 603 Tm
+(- To The Stars at 15 or more upvotes on a post or comment) Tj
+/F1 11 Tf
+1 0 0 1 54 578 Tm
+(Badge display behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 553 Tm
+(- Badges can appear on posts) Tj
+/F1 11 Tf
+1 0 0 1 66 538 Tm
+(- Badges can appear on comments) Tj
+/F1 11 Tf
+1 0 0 1 66 523 Tm
+(- Badges appear in profile achievement summaries) Tj
+/F1 11 Tf
+1 0 0 1 66 508 Tm
+(- Badges appear in hover cards) Tj
+/F1 11 Tf
+1 0 0 1 54 483 Tm
+(Visual polish:) Tj
+/F1 11 Tf
+1 0 0 1 66 458 Tm
+(- Tier-specific glow styling) Tj
+/F1 11 Tf
+1 0 0 1 66 443 Tm
+(- Compact hover presentation on post cards) Tj
+/F1 11 Tf
+1 0 0 1 66 428 Tm
+(- Badge artwork sourced from local PNG assets) Tj
+/F2 16 Tf
+1 0 0 1 54 403 Tm
+(Aura System) Tj
+/F1 11 Tf
+1 0 0 1 54 374 Tm
+(Aura is DevMax's reputation mechanic.) Tj
+/F1 11 Tf
+1 0 0 1 54 349 Tm
+(Current Aura rules:) Tj
+/F1 11 Tf
+1 0 0 1 66 324 Tm
+(- Each upvote gives +5 Aura) Tj
+/F1 11 Tf
+1 0 0 1 66 309 Tm
+(- Each response to a user's post or comment gives +10 Aura) Tj
+/F1 11 Tf
+1 0 0 1 66 294 Tm
+(- Baby Steps gives +50 Aura) Tj
+/F1 11 Tf
+1 0 0 1 66 279 Tm
+(- Adept gives +80 Aura) Tj
+/F1 11 Tf
+1 0 0 1 66 264 Tm
+(- To The Stars gives +150 Aura) Tj
+/F1 11 Tf
+1 0 0 1 54 239 Tm
+(Aura appears in:) Tj
+/F1 11 Tf
+1 0 0 1 66 214 Tm
+(- The user's profile header) Tj
+/F1 11 Tf
+1 0 0 1 66 199 Tm
+(- The profile stats card) Tj
+/F1 11 Tf
+1 0 0 1 66 184 Tm
+(- Username hover cards) Tj
+/F1 11 Tf
+1 0 0 1 54 159 Tm
+(What to say in a demo:) Tj
+/F1 11 Tf
+1 0 0 1 66 134 Tm
+(- Aura is the reputation total built from community reaction plus earned) Tj
+/F1 11 Tf
+1 0 0 1 54 119 Tm
+(achievements.) Tj
+/F2 16 Tf
+1 0 0 1 54 94 Tm
+(Achievement and Aura Placement) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 7 of 12) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Length 2256 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 54 738 Tm
+(Profiles include an "Achievements" card that summarizes badge progress.) Tj
+/F1 11 Tf
+1 0 0 1 54 713 Tm
+(This card shows:) Tj
+/F1 11 Tf
+1 0 0 1 66 688 Tm
+(- Which achievements the user has earned) Tj
+/F1 11 Tf
+1 0 0 1 66 673 Tm
+(- How many times each one has been earned) Tj
+/F1 11 Tf
+1 0 0 1 66 658 Tm
+(- The Aura value tied to that tier) Tj
+/F1 11 Tf
+1 0 0 1 54 633 Tm
+(Post and comment surfaces show the single highest current tier reached by that) Tj
+/F1 11 Tf
+1 0 0 1 54 618 Tm
+(content item.) Tj
+/F2 16 Tf
+1 0 0 1 54 593 Tm
+(Badge Notifications) Tj
+/F1 11 Tf
+1 0 0 1 54 564 Tm
+(When a post or comment crosses an achievement threshold, the owner receives a) Tj
+/F1 11 Tf
+1 0 0 1 54 549 Tm
+(notification.) Tj
+/F1 11 Tf
+1 0 0 1 54 524 Tm
+(Notification style:) Tj
+/F1 11 Tf
+1 0 0 1 66 499 Tm
+(- "You have been awarded the [badge name] badge! +[Aura amount] Aura >:\)") Tj
+/F1 11 Tf
+1 0 0 1 54 474 Tm
+(This turns achievements into an active feedback loop rather than a passive) Tj
+/F1 11 Tf
+1 0 0 1 54 459 Tm
+(profile-only system.) Tj
+/F2 16 Tf
+1 0 0 1 54 434 Tm
+(Notifications) Tj
+/F1 11 Tf
+1 0 0 1 54 405 Tm
+(Authenticated users have an inbox in the header.) Tj
+/F1 11 Tf
+1 0 0 1 54 380 Tm
+(Notification sources include:) Tj
+/F1 11 Tf
+1 0 0 1 66 355 Tm
+(- New posts in relevant subthreads) Tj
+/F1 11 Tf
+1 0 0 1 66 340 Tm
+(- Comments on a user's posts) Tj
+/F1 11 Tf
+1 0 0 1 66 325 Tm
+(- Replies to a user's comments) Tj
+/F1 11 Tf
+1 0 0 1 66 310 Tm
+(- Achievement awards) Tj
+/F1 11 Tf
+1 0 0 1 54 285 Tm
+(Notification behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 260 Tm
+(- Unread badge count in the header) Tj
+/F1 11 Tf
+1 0 0 1 66 245 Tm
+(- Notification dropdown panel) Tj
+/F1 11 Tf
+1 0 0 1 66 230 Tm
+(- Notification links route to the relevant destination) Tj
+/F1 11 Tf
+1 0 0 1 66 215 Tm
+(- Notifications are marked read when opened) Tj
+/F2 16 Tf
+1 0 0 1 54 190 Tm
+(User Profiles) Tj
+/F1 11 Tf
+1 0 0 1 54 161 Tm
+(Profiles now act as rich identity pages instead of simple account pages.) Tj
+/F1 11 Tf
+1 0 0 1 54 136 Tm
+(Main profile elements:) Tj
+/F1 11 Tf
+1 0 0 1 66 111 Tm
+(- Username) Tj
+/F1 11 Tf
+1 0 0 1 66 96 Tm
+(- Profile photo) Tj
+/F1 11 Tf
+1 0 0 1 66 81 Tm
+(- Editable bio) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 8 of 12) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Length 2092 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 66 738 Tm
+(- Aura total) Tj
+/F1 11 Tf
+1 0 0 1 66 723 Tm
+(- Post count) Tj
+/F1 11 Tf
+1 0 0 1 66 708 Tm
+(- Comment count) Tj
+/F1 11 Tf
+1 0 0 1 66 693 Tm
+(- Subthread count) Tj
+/F1 11 Tf
+1 0 0 1 66 678 Tm
+(- Stats card) Tj
+/F1 11 Tf
+1 0 0 1 66 663 Tm
+(- Achievements card) Tj
+/F1 11 Tf
+1 0 0 1 66 648 Tm
+(- Top posts card) Tj
+/F1 11 Tf
+1 0 0 1 54 623 Tm
+(Activity tabs:) Tj
+/F1 11 Tf
+1 0 0 1 66 598 Tm
+(- Overview) Tj
+/F1 11 Tf
+1 0 0 1 66 583 Tm
+(- Posts) Tj
+/F1 11 Tf
+1 0 0 1 66 568 Tm
+(- Comments) Tj
+/F1 11 Tf
+1 0 0 1 54 543 Tm
+(Profile page layout details:) Tj
+/F1 11 Tf
+1 0 0 1 66 518 Tm
+(- Right sidebar has its own scroll behavior when content gets tall) Tj
+/F1 11 Tf
+1 0 0 1 66 503 Tm
+(- The layout is designed to keep stats and achievements visible without) Tj
+/F1 11 Tf
+1 0 0 1 54 488 Tm
+(overwhelming the main activity column) Tj
+/F2 16 Tf
+1 0 0 1 54 463 Tm
+(Profile Photo Flow) Tj
+/F1 11 Tf
+1 0 0 1 54 434 Tm
+(Users can upload a custom profile photo.) Tj
+/F1 11 Tf
+1 0 0 1 54 409 Tm
+(Current behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 384 Tm
+(- Hovering the avatar reveals an edit icon) Tj
+/F1 11 Tf
+1 0 0 1 66 369 Tm
+(- Clicking opens a floating modal) Tj
+/F1 11 Tf
+1 0 0 1 66 354 Tm
+(- Invalid file types show an error message) Tj
+/F1 11 Tf
+1 0 0 1 66 339 Tm
+(- Save action uses a loading state) Tj
+/F1 11 Tf
+1 0 0 1 66 324 Tm
+(- Updated avatar appears on the profile and in the header menu) Tj
+/F1 11 Tf
+1 0 0 1 54 299 Tm
+(Accepted image types:) Tj
+/F1 11 Tf
+1 0 0 1 66 274 Tm
+(- JPG) Tj
+/F1 11 Tf
+1 0 0 1 66 259 Tm
+(- JPEG) Tj
+/F1 11 Tf
+1 0 0 1 66 244 Tm
+(- PNG) Tj
+/F1 11 Tf
+1 0 0 1 66 229 Tm
+(- GIF) Tj
+/F1 11 Tf
+1 0 0 1 66 214 Tm
+(- WebP) Tj
+/F2 16 Tf
+1 0 0 1 54 189 Tm
+(Bio Flow) Tj
+/F1 11 Tf
+1 0 0 1 54 160 Tm
+(Profiles support an editable bio.) Tj
+/F1 11 Tf
+1 0 0 1 54 135 Tm
+(Behavior:) Tj
+/F1 11 Tf
+1 0 0 1 66 110 Tm
+(- If no bio exists, the profile shows "No bio yet") Tj
+/F1 11 Tf
+1 0 0 1 66 95 Tm
+(- The text itself is not the button) Tj
+/F1 11 Tf
+1 0 0 1 66 80 Tm
+(- "Edit bio" is the clickable action) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 9 of 12) Tj
+ET
+endstream
+endobj
+12 0 obj
+<< /Length 2112 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 66 738 Tm
+(- Bio editing happens in a floating modal) Tj
+/F2 16 Tf
+1 0 0 1 54 713 Tm
+(Username Hover Cards) Tj
+/F1 11 Tf
+1 0 0 1 54 684 Tm
+(Hovering a username can show a quick profile preview card.) Tj
+/F1 11 Tf
+1 0 0 1 54 659 Tm
+(The hover card can surface:) Tj
+/F1 11 Tf
+1 0 0 1 66 634 Tm
+(- Username) Tj
+/F1 11 Tf
+1 0 0 1 66 619 Tm
+(- Aura total) Tj
+/F1 11 Tf
+1 0 0 1 66 604 Tm
+(- Achievement summary) Tj
+/F1 11 Tf
+1 0 0 1 66 589 Tm
+(- Profile photo) Tj
+/F1 11 Tf
+1 0 0 1 66 574 Tm
+(- Bio) Tj
+/F1 11 Tf
+1 0 0 1 54 549 Tm
+(This is useful in demos because it shows how DevMax surfaces reputation and) Tj
+/F1 11 Tf
+1 0 0 1 54 534 Tm
+(identity without forcing a full profile navigation every time.) Tj
+/F2 16 Tf
+1 0 0 1 54 509 Tm
+(Search) Tj
+/F1 11 Tf
+1 0 0 1 54 480 Tm
+(DevMax supports:) Tj
+/F1 11 Tf
+1 0 0 1 66 455 Tm
+(- Full search results page) Tj
+/F1 11 Tf
+1 0 0 1 66 440 Tm
+(- Scope-aware search inside a subthread) Tj
+/F1 11 Tf
+1 0 0 1 66 425 Tm
+(- Predictive dropdown suggestions in the header) Tj
+/F1 11 Tf
+1 0 0 1 54 400 Tm
+(Search can find:) Tj
+/F1 11 Tf
+1 0 0 1 66 375 Tm
+(- Posts) Tj
+/F1 11 Tf
+1 0 0 1 66 360 Tm
+(- Subthreads) Tj
+/F1 11 Tf
+1 0 0 1 66 345 Tm
+(- User profiles) Tj
+/F1 11 Tf
+1 0 0 1 66 330 Tm
+(- Tags) Tj
+/F1 11 Tf
+1 0 0 1 54 305 Tm
+(Search results are organized into sections and tabs depending on context.) Tj
+/F2 16 Tf
+1 0 0 1 54 280 Tm
+(Superuser and Moderation Tools) Tj
+/F1 11 Tf
+1 0 0 1 54 251 Tm
+(Superusers have access to a dedicated dashboard.) Tj
+/F1 11 Tf
+1 0 0 1 54 226 Tm
+(Dashboard surfaces:) Tj
+/F1 11 Tf
+1 0 0 1 66 201 Tm
+(- Platform-wide counts for users, subthreads, posts, comments, questions, and audit) Tj
+/F1 11 Tf
+1 0 0 1 66 186 Tm
+(  events) Tj
+/F1 11 Tf
+1 0 0 1 66 171 Tm
+(- Recent posts) Tj
+/F1 11 Tf
+1 0 0 1 66 156 Tm
+(- Recent comments) Tj
+/F1 11 Tf
+1 0 0 1 66 141 Tm
+(- Recent signups) Tj
+/F1 11 Tf
+1 0 0 1 66 126 Tm
+(- Recent subthreads) Tj
+/F1 11 Tf
+1 0 0 1 66 111 Tm
+(- Moderation audit log) Tj
+/F1 11 Tf
+1 0 0 1 54 86 Tm
+(Moderation controls available across the site include:) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 10 of 12) Tj
+ET
+endstream
+endobj
+13 0 obj
+<< /Length 2795 >>
+stream
+BT
+/F1 11 Tf
+1 0 0 1 66 738 Tm
+(- Manual vote boosting) Tj
+/F1 11 Tf
+1 0 0 1 66 723 Tm
+(- Post deletion) Tj
+/F1 11 Tf
+1 0 0 1 66 708 Tm
+(- Comment deletion) Tj
+/F1 11 Tf
+1 0 0 1 66 693 Tm
+(- Subthread deletion) Tj
+/F1 11 Tf
+1 0 0 1 66 678 Tm
+(- Solved-question override ability) Tj
+/F1 11 Tf
+1 0 0 1 54 653 Tm
+(Audit logging captures moderation actions so they can be reviewed later.) Tj
+/F2 16 Tf
+1 0 0 1 54 628 Tm
+(Visual and Interaction Polish) Tj
+/F1 11 Tf
+1 0 0 1 54 599 Tm
+(The site uses several UI refinements that are useful to mention in a review:) Tj
+/F1 11 Tf
+1 0 0 1 66 574 Tm
+(- Floating modal flows for creation and editing) Tj
+/F1 11 Tf
+1 0 0 1 66 559 Tm
+(- Loading states on important submit buttons) Tj
+/F1 11 Tf
+1 0 0 1 66 544 Tm
+(- Sticky rails and independent profile sidebar scroll) Tj
+/F1 11 Tf
+1 0 0 1 66 529 Tm
+(- Light and dark mode) Tj
+/F1 11 Tf
+1 0 0 1 66 514 Tm
+(- Predictive search dropdown) Tj
+/F1 11 Tf
+1 0 0 1 66 499 Tm
+(- Hover cards) Tj
+/F1 11 Tf
+1 0 0 1 66 484 Tm
+(- Distinct question-state pills) Tj
+/F1 11 Tf
+1 0 0 1 66 469 Tm
+(- Compact badge hover behavior) Tj
+/F2 16 Tf
+1 0 0 1 54 444 Tm
+(Assets and Branding) Tj
+/F1 11 Tf
+1 0 0 1 54 415 Tm
+(Current static image assets include:) Tj
+/F1 11 Tf
+1 0 0 1 66 390 Tm
+(- Browser tab icon) Tj
+/F1 11 Tf
+1 0 0 1 66 375 Tm
+(- Three achievement badge PNGs) Tj
+/F1 11 Tf
+1 0 0 1 54 350 Tm
+(Tracked asset paths:) Tj
+/F1 11 Tf
+1 0 0 1 66 325 Tm
+(- `main/static/images/site-icon.png`) Tj
+/F1 11 Tf
+1 0 0 1 66 310 Tm
+(- `main/static/images/achievements/baby-steps.png`) Tj
+/F1 11 Tf
+1 0 0 1 66 295 Tm
+(- `main/static/images/achievements/adept.png`) Tj
+/F1 11 Tf
+1 0 0 1 66 280 Tm
+(- `main/static/images/achievements/to-the-stars.png`) Tj
+/F1 11 Tf
+1 0 0 1 54 255 Tm
+(These assets are part of the repository, so other collaborators receive them) Tj
+/F1 11 Tf
+1 0 0 1 54 240 Tm
+(when they pull the branch.) Tj
+/F2 16 Tf
+1 0 0 1 54 215 Tm
+(Practical Demo Talking Points) Tj
+/F1 11 Tf
+1 0 0 1 54 186 Tm
+(If the presenter only has a short window, the strongest points are:) Tj
+/F1 11 Tf
+1 0 0 1 66 161 Tm
+(- DevMax separates Home, Trending, and Questions clearly instead of treating) Tj
+/F1 11 Tf
+1 0 0 1 54 146 Tm
+(them as duplicates.) Tj
+/F1 11 Tf
+1 0 0 1 66 131 Tm
+(- Questions have a real solved mechanic rather than being just another feed.) Tj
+/F1 11 Tf
+1 0 0 1 66 116 Tm
+(- Reputation is productized as Aura plus visual achievements.) Tj
+/F1 11 Tf
+1 0 0 1 66 101 Tm
+(- Profiles are not static; they are customizable and tied to visible reputation.) Tj
+/F1 11 Tf
+1 0 0 1 66 86 Tm
+(- Search, hover cards, notifications, and badges make the site feel alive.) Tj
+/F1 11 Tf
+1 0 0 1 66 71 Tm
+(- Moderation and demo tooling exist through superuser controls and audit logs.) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 11 of 12) Tj
+ET
+endstream
+endobj
+14 0 obj
+<< /Length 1538 >>
+stream
+BT
+/F2 16 Tf
+1 0 0 1 54 738 Tm
+(Important Boundaries for the Presenter) Tj
+/F1 11 Tf
+1 0 0 1 54 709 Tm
+(The current demo should emphasize implemented mechanics and avoid overstating:) Tj
+/F1 11 Tf
+1 0 0 1 66 684 Tm
+(- The Share button is present in the UI, but it is not a core documented system.) Tj
+/F1 11 Tf
+1 0 0 1 66 669 Tm
+(- Footer links are mostly structural placeholders rather than a finished info) Tj
+/F1 11 Tf
+1 0 0 1 66 654 Tm
+(  architecture.) Tj
+/F2 16 Tf
+1 0 0 1 54 629 Tm
+(Final Summary) Tj
+/F1 11 Tf
+1 0 0 1 54 600 Tm
+(DevMax is currently best described as a developer forum platform with:) Tj
+/F1 11 Tf
+1 0 0 1 66 575 Tm
+(- Personalized feeds) Tj
+/F1 11 Tf
+1 0 0 1 66 560 Tm
+(- Sitewide trending discovery) Tj
+/F1 11 Tf
+1 0 0 1 66 545 Tm
+(- Dedicated Q and A solving) Tj
+/F1 11 Tf
+1 0 0 1 66 530 Tm
+(- Community subthreads) Tj
+/F1 11 Tf
+1 0 0 1 66 515 Tm
+(- Threaded discussion) Tj
+/F1 11 Tf
+1 0 0 1 66 500 Tm
+(- Votes and reputation) Tj
+/F1 11 Tf
+1 0 0 1 66 485 Tm
+(- Achievement-driven feedback) Tj
+/F1 11 Tf
+1 0 0 1 66 470 Tm
+(- Search and hover discovery) Tj
+/F1 11 Tf
+1 0 0 1 66 455 Tm
+(- Customizable profiles) Tj
+/F1 11 Tf
+1 0 0 1 66 440 Tm
+(- Moderation oversight) Tj
+/F1 11 Tf
+1 0 0 1 54 415 Tm
+(Anyone presenting the website should frame it as a discussion platform with) Tj
+/F1 11 Tf
+1 0 0 1 54 400 Tm
+(clear identity, clear progression mechanics, and strong separation between) Tj
+/F1 11 Tf
+1 0 0 1 54 385 Tm
+(discussion, discovery, and problem-solving.) Tj
+/F1 10 Tf
+1 0 0 1 488 28 Tm
+(Page 12 of 12) Tj
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Pages /Kids [ 16 0 R 17 0 R 18 0 R 19 0 R 20 0 R 21 0 R 22 0 R 23 0 R 24 0 R 25 0 R 26 0 R 27 0 R ] /Count 12 /MediaBox [0 0 612 792] >>
+endobj
+16 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 3 0 R >>
+endobj
+17 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 4 0 R >>
+endobj
+18 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 5 0 R >>
+endobj
+19 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 6 0 R >>
+endobj
+20 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 7 0 R >>
+endobj
+21 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 8 0 R >>
+endobj
+22 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 9 0 R >>
+endobj
+23 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 10 0 R >>
+endobj
+24 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 11 0 R >>
+endobj
+25 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 12 0 R >>
+endobj
+26 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 13 0 R >>
+endobj
+27 0 obj
+<< /Type /Page /Parent 15 0 R /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 14 0 R >>
+endobj
+28 0 obj
+<< /Type /Catalog /Pages 15 0 R >>
+endobj
+xref
+0 29
+0000000000 65535 f 
+0000000015 00000 n 
+0000000085 00000 n 
+0000000160 00000 n 
+0000002939 00000 n 
+0000005407 00000 n 
+0000007999 00000 n 
+0000010363 00000 n 
+0000012824 00000 n 
+0000015231 00000 n 
+0000017405 00000 n 
+0000019714 00000 n 
+0000021859 00000 n 
+0000024024 00000 n 
+0000026872 00000 n 
+0000028463 00000 n 
+0000028626 00000 n 
+0000028740 00000 n 
+0000028854 00000 n 
+0000028968 00000 n 
+0000029082 00000 n 
+0000029196 00000 n 
+0000029310 00000 n 
+0000029424 00000 n 
+0000029539 00000 n 
+0000029654 00000 n 
+0000029769 00000 n 
+0000029884 00000 n 
+0000029999 00000 n 
+trailer
+<< /Size 29 /Root 28 0 R >>
+startxref
+30050
+%%EOF

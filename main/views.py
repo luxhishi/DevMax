@@ -1,3 +1,4 @@
+import mimetypes
 import re
 from datetime import timedelta
 from urllib.parse import urlencode
@@ -8,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.db.models import Count, Q
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -20,6 +21,13 @@ from .reputation import ACHIEVEMENT_LEVELS, achievement_for_upvotes, build_user_
 
 PROFILE_PHOTO_MAX_BYTES = 5 * 1024 * 1024
 PROFILE_PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+PROFILE_PHOTO_CONTENT_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
 PROFILE_BIO_MAX_LENGTH = 280
 HOME_FEED_UPVOTE_MINUTES = 8
 HOME_FEED_COMMENT_MINUTES = 12
@@ -54,8 +62,8 @@ def _build_profile_url(username, tab=None):
 
 
 def _profile_photo_url(preference):
-    if preference and preference.profile_photo:
-        return preference.profile_photo.url
+    if preference:
+        return preference.get_profile_photo_url()
     return ""
 
 
@@ -1509,7 +1517,7 @@ def profile_view(request, username):
     active_tab = request.GET.get("tab", "overview").strip().lower()
     if active_tab not in {"overview", "posts", "comments"}:
         active_tab = "overview"
-    profile_preference = UserPreference.objects.filter(user=profile_user).first()
+    profile_preference = UserPreference.objects.filter(user=profile_user).defer("profile_photo_blob").first()
 
     user_posts_qs = (
         Post.objects.filter(author=profile_user)
@@ -1615,7 +1623,7 @@ def profile_view(request, username):
 
 def user_hover_card(request, username):
     hover_user = get_object_or_404(User, username=username)
-    hover_preference = UserPreference.objects.filter(user=hover_user).first()
+    hover_preference = UserPreference.objects.filter(user=hover_user).defer("profile_photo_blob").first()
     hover_reputation = build_user_reputation_summary(hover_user)
     context = {
         "hover_user": hover_user,
@@ -1625,6 +1633,21 @@ def user_hover_card(request, username):
         "hover_reputation": hover_reputation,
     }
     return render(request, "components/user_hover_card.html", context)
+
+
+def user_profile_photo(request, username):
+    photo_user = get_object_or_404(User, username=username)
+    preference = UserPreference.objects.filter(user=photo_user).first()
+
+    if preference and preference.profile_photo_blob and preference.profile_photo_content_type:
+        response = HttpResponse(bytes(preference.profile_photo_blob), content_type=preference.profile_photo_content_type)
+        response["Cache-Control"] = "no-store"
+        return response
+
+    if preference and preference.profile_photo:
+        return redirect(preference.profile_photo.url)
+
+    raise Http404("Profile photo not found.")
 
 
 @login_required
@@ -1653,11 +1676,20 @@ def update_profile_photo(request):
 
     preference, _ = UserPreference.objects.get_or_create(user=request.user)
     previous_photo_name = preference.profile_photo.name if preference.profile_photo else ""
-    preference.profile_photo = profile_photo
-    preference.save(update_fields=["profile_photo"])
+    previous_photo_storage = preference.profile_photo.storage if previous_photo_name else None
+    extension = f".{lowered_name.rsplit('.', 1)[-1]}" if "." in lowered_name else ""
+    preference.profile_photo_blob = profile_photo.read()
+    preference.profile_photo_content_type = (
+        profile_photo.content_type
+        or PROFILE_PHOTO_CONTENT_TYPES.get(extension)
+        or mimetypes.guess_type(f"photo{extension}")[0]
+        or "application/octet-stream"
+    )
+    preference.profile_photo = ""
+    preference.save(update_fields=["profile_photo_blob", "profile_photo_content_type", "profile_photo"])
 
-    if previous_photo_name and previous_photo_name != preference.profile_photo.name:
-        preference.profile_photo.storage.delete(previous_photo_name)
+    if previous_photo_storage and previous_photo_name:
+        previous_photo_storage.delete(previous_photo_name)
 
     messages.success(request, "Profile photo updated.")
     return redirect(redirect_url)
