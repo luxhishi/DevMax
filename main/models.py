@@ -13,10 +13,19 @@ class UserPreference(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="preference")
     display_mode = models.CharField(max_length=5, choices=DISPLAY_MODE_CHOICES, default="light")
     profile_photo = models.FileField(upload_to="profile_photos/", blank=True)
+    profile_photo_blob = models.BinaryField(blank=True, null=True)
+    profile_photo_content_type = models.CharField(max_length=100, blank=True)
     bio = models.TextField(blank=True)
 
     def __str__(self):
         return f"Preferences for {self.user.username}"
+
+    def get_profile_photo_url(self):
+        if self.profile_photo_content_type:
+            return reverse("main:user_profile_photo", kwargs={"username": self.user.username})
+        if self.profile_photo:
+            return self.profile_photo.url
+        return ""
 
 
 class Subthread(models.Model):
